@@ -25,8 +25,7 @@
   "idf.port": "/dev/tty.usbmodem2101",
   "idf.currentSetup": "/Users/eric/.espressif/v6.1/esp-idf",
   "idf.customExtraVars": {
-    "IDF_TARGET": "esp32s3",
-    "OPENOCD_USB_ADAPTER_LOCATION": "2-1"
+    "IDF_TARGET": "esp32s3"
   },
   "idf.flashType": "JTAG",
   "clangd.path": "/Users/eric/.espressif/tools/esp-clangd/esp-21.1.3_20260408/esp-clangd/bin/clangd",

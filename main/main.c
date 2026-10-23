@@ -20,6 +20,7 @@
 #include "nvs.h"
 
 #include "neopixel.h"
+#include "bme280.h"
 
 #include "ui.h"
 #include "screens.h"
@@ -452,7 +453,10 @@ static void mode_button_event_handler(lv_event_t * event)
 }
 
 static void eez_ui_tick_cb(lv_timer_t * timer) {
-    ui_tick(); // Call EEZ Studio's tick function
+    if (lvgl_port_lock(0)) {
+        ui_tick(); // Call EEZ Studio's tick function
+        lvgl_port_unlock();
+    }
 }
 
 static void lvgl_initialize(void) {
@@ -819,6 +823,22 @@ void monitor_idle_timeout(void *arg)
     }
 }
 
+static void monitor_sensors(void *arg)
+{
+    (void)arg;
+    bme280_data_t data;
+    while (true) {
+        if (bme280_read(&data) == ESP_OK) {
+            set_var_current_temp(data.temperature_f);
+            ESP_LOGI(TAG, "BME280: %d°F  %lu%%RH  %lu Pa",
+                     (int)data.temperature_f,
+                     (unsigned long)data.humidity_pct,
+                     (unsigned long)data.pressure_pa);
+        }
+        vTaskDelay(pdMS_TO_TICKS(5000));
+    }
+}
+
 static void set_startup_values(void)
 {
     current_state = STATE_OFF;
@@ -828,8 +848,7 @@ static void set_startup_values(void)
     requested_setpoint = read_int32_with_default("setpoint", 68);
     inactivity_timeout_ms = read_int32_with_default("timeout_ms", 30000);
     default_screen_brightness = read_int32_with_default("def_bright", 100);
-    // Remove this when we have a real temp sensor
-    current_temp = 72;
+    current_temp = 87; /* replaced by BME280 task once it starts */
 }
 
 void app_main(void)
@@ -859,6 +878,9 @@ void app_main(void)
 
     ESP_LOGI(TAG, "Touch Init");
     touch_init();
+
+    ESP_LOGI(TAG, "BME280 Init");
+    bme280_init();
 
     lvgl_initialize();
     lv_display_trigger_activity(NULL); 
@@ -901,11 +923,20 @@ void app_main(void)
     );
 
     xTaskCreate(
-        monitor_state, 
-        "monitor_state", 
-        4096, 
-        NULL, 
-        2, 
+        monitor_state,
+        "monitor_state",
+        4096,
+        NULL,
+        2,
+        NULL
+    );
+
+    xTaskCreate(
+        monitor_sensors,
+        "sensors",
+        4096,
+        NULL,
+        2,
         NULL
     );
 }

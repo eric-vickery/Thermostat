@@ -1,0 +1,10 @@
+dependencies:
+  idf: ">=5.0"
+  espressif/esp_lcd_gc9a01: "^2.0.0"
+  zorxx/neopixel: "*"
+  esp_lcd_touch_cst816s: "^1.1.2"
+  espressif/esp_lvgl_port: "^2.3.1"
+  # haruny/eez-framework: "*"
+  # lovyangfx:
+  #   git: https://github.com/lovyan03/LovyanGFX
+    # version: "^1.2.34"

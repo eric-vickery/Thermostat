@@ -22,12 +22,12 @@ extern int32_t get_var_setpoint();
 extern void set_var_setpoint(int32_t value);
 extern int32_t get_var_current_temp();
 extern void set_var_current_temp(int32_t value);
-extern const char *get_var_mode_string();
-extern void set_var_mode_string(const char *value);
 extern int32_t get_var_humidity();
 extern void set_var_humidity(int32_t value);
 extern const char *get_var_pressure_string();
 extern void set_var_pressure_string(const char *value);
+extern int32_t get_var_mode();
+extern void set_var_mode(int32_t value);
 
 #ifdef __cplusplus
 }

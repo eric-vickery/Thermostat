@@ -63,7 +63,6 @@ static uint32_t mode_changed_time;
 static int32_t setpoint;
 static int32_t requested_setpoint;
 static int32_t current_temp;
-char mode_string[100] = { 0 };
 
 int32_t get_var_setpoint() {
     return requested_setpoint;
@@ -84,13 +83,14 @@ void set_var_current_temp(int32_t value) {
     current_temp = value;
 }
 
-const char *get_var_mode_string() {
-    return mode_string;
+static int32_t mode_value;
+
+int32_t get_var_mode() {
+    return mode_value;
 }
 
-void set_var_mode_string(const char *value) {
-    strncpy(mode_string, value, sizeof(mode_string) / sizeof(char));
-    mode_string[sizeof(mode_string) / sizeof(char) - 1] = 0;
+void set_var_mode(int32_t value) {
+    mode_value = value;
 }
 
 static int32_t humidity;
@@ -453,7 +453,9 @@ static bool neopixel_init(void)
 
 static void toggle_mode()
 {
-    switch (current_mode)
+    // Step from the requested mode, not the applied one, so every tap advances the UI
+    // even while an earlier request is still waiting to lock in
+    switch (requested_mode)
     {
     case MODE_OFF:
         request_new_mode(MODE_MANUAL);
@@ -707,17 +709,17 @@ void request_new_mode(thermostat_mode_t new_mode)
     switch(new_mode) {
         case MODE_MANUAL:
             requested_mode = MODE_MANUAL;
-            set_var_mode_string("Manual");
+            set_var_mode(MODE_MANUAL);
             break;
 
         case MODE_SCHEDULE:
             requested_mode = MODE_SCHEDULE;
-            set_var_mode_string("Schedule");
+            set_var_mode(MODE_SCHEDULE);
             break;
 
         case MODE_OFF:
             requested_mode = MODE_OFF;
-            set_var_mode_string("Off");
+            set_var_mode(MODE_OFF);
             break;
     }
 }
@@ -727,17 +729,14 @@ void set_new_mode(thermostat_mode_t new_mode)
     switch(new_mode) {
         case MODE_MANUAL:
             current_mode = MODE_MANUAL;
-            set_var_mode_string("Manual");
             break;
 
         case MODE_SCHEDULE:
             current_mode = MODE_SCHEDULE;
-            set_var_mode_string("Schedule");
             break;
 
         case MODE_OFF:
             current_mode = MODE_OFF;
-            set_var_mode_string("Off");
             break;
     }
     store_int32("mode", current_mode);
@@ -789,14 +788,20 @@ void monitor_state(void *arg)
             // See if we should turn off
             if (((setpoint + temperature_hysteresis) <= current_temp) || (current_mode == MODE_OFF)) {
                 current_state = STATE_OFF;
-                toggle_ring_fade(false);
+                if (lvgl_port_lock(0)) {
+                    toggle_ring_fade(false);
+                    lvgl_port_unlock();
+                }
             }
         }
         else { // Must be in STATE_OFF
             // See if we should turn on
             if (((current_temp + temperature_hysteresis) <= setpoint) && (current_mode != MODE_OFF)) {
                 current_state = STATE_ON;
-                toggle_ring_fade(true);
+                if (lvgl_port_lock(0)) {
+                    toggle_ring_fade(true);
+                    lvgl_port_unlock();
+                }
             }
         }
         vTaskDelay(pdMS_TO_TICKS(400));
@@ -808,8 +813,9 @@ void monitor_mode_change(void *arg)
     (void)arg;
     while(true) {
         if (((esp_timer_get_time()/1000) - mode_changed_time) > LOCK_IN_DELAY_MS) {
-            if (current_mode != requested_mode) {
-                set_new_mode(requested_mode);
+            thermostat_mode_t target = requested_mode;
+            if (current_mode != target) {
+                set_new_mode(target);
             }
         }
         vTaskDelay(pdMS_TO_TICKS(100));
@@ -908,6 +914,7 @@ static void set_startup_values(void)
     current_state = STATE_OFF;
     requested_mode = (thermostat_mode_t)read_int32_with_default("mode", (int32_t)MODE_MANUAL);
     set_new_mode(requested_mode);
+    set_var_mode(requested_mode);
     temperature_hysteresis = read_int32_with_default("temp_hyst", 2);
     requested_setpoint = read_int32_with_default("setpoint", 68);
     inactivity_timeout_ms = read_int32_with_default("timeout_ms", 30000);

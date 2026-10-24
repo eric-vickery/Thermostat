@@ -11,6 +11,9 @@
     "styles.h",
     "ui.c",
     "ui.h",
+    "ui_image_mode_manual.c",
+    "ui_image_mode_off.c",
+    "ui_image_mode_schedule.c",
     "vars.h"
   ]
 }

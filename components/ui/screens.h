@@ -28,6 +28,10 @@ typedef struct _objects_t {
     lv_obj_t *setpoint;
     lv_obj_t *mode;
     lv_obj_t *mode_button;
+    lv_obj_t *humidity_label;
+    lv_obj_t *humidity;
+    lv_obj_t *pressure_label;
+    lv_obj_t *pressure;
     lv_obj_t *current_temp_arc_1;
     lv_obj_t *current_temp_1;
 } objects_t;

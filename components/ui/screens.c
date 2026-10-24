@@ -13,7 +13,7 @@
 objects_t objects;
 
 static const char *screen_names[] = { "Main", "Idle" };
-static const char *object_names[] = { "main", "idle", "main_container", "current_temp_arc", "setpoint_arc", "current_temp_label", "current_temp", "setpoint_label", "setpoint", "mode", "mode_button", "current_temp_arc_1", "current_temp_1" };
+static const char *object_names[] = { "main", "idle", "main_container", "current_temp_arc", "setpoint_arc", "current_temp_label", "current_temp", "setpoint_label", "setpoint", "mode", "mode_button", "humidity_label", "humidity", "pressure_label", "pressure", "current_temp_arc_1", "current_temp_1" };
 
 //
 // Event handlers
@@ -198,6 +198,50 @@ void create_screen_main() {
                 }
             }
         }
+        {
+            // Humidity Label
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.humidity_label = obj;
+            lv_obj_set_pos(obj, 45, 168);
+            lv_obj_set_size(obj, 60, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_10, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text_static(obj, "Humidity %");
+        }
+        {
+            // Humidity
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.humidity = obj;
+            lv_obj_set_pos(obj, 55, 181);
+            lv_obj_set_size(obj, 40, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text(obj, "");
+        }
+        {
+            // Pressure Label
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.pressure_label = obj;
+            lv_obj_set_pos(obj, 118, 168);
+            lv_obj_set_size(obj, 80, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_10, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text_static(obj, "Pressure inHg");
+        }
+        {
+            // Pressure
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.pressure = obj;
+            lv_obj_set_pos(obj, 123, 181);
+            lv_obj_set_size(obj, 70, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text(obj, "");
+        }
     }
     
     tick_screen_main();
@@ -248,6 +292,24 @@ void tick_screen_main() {
         if (strcmp(new_val, cur_val) != 0) {
             tick_value_change_obj = objects.mode;
             lv_label_set_text(objects.mode, new_val);
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        const char *new_val = evalTextProperty(flowState, 12, 3, "Failed to evaluate Text in Label widget");
+        const char *cur_val = lv_label_get_text(objects.humidity);
+        if (strcmp(new_val, cur_val) != 0) {
+            tick_value_change_obj = objects.humidity;
+            lv_label_set_text(objects.humidity, new_val);
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        const char *new_val = evalTextProperty(flowState, 14, 3, "Failed to evaluate Text in Label widget");
+        const char *cur_val = lv_label_get_text(objects.pressure);
+        if (strcmp(new_val, cur_val) != 0) {
+            tick_value_change_obj = objects.pressure;
+            lv_label_set_text(objects.pressure, new_val);
             tick_value_change_obj = NULL;
         }
     }

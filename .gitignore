@@ -78,3 +78,7 @@ Desktop.ini
 *.sln.docstates # Visual Studio
 
 components/eez-framework
+
+# EEZ Studio patch scripts and their project backups
+tmp/
+*.eez-project.bak.*

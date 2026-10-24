@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[Thermostat.eez-project]:/userPages/1",
+    "selectedUserPageObject": "[Thermostat.eez-project]:/userPages/0",
     "selectedGlobalVariableObject": "[Thermostat.eez-project]:/variables/globalVariables/2",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Global"
@@ -166,8 +166,7 @@
                       "enableClose": false,
                       "icon": "svg:hierarchy"
                     }
-                  ],
-                  "active": true
+                  ]
                 },
                 {
                   "type": "tabset",
@@ -197,10 +196,10 @@
                 {
                   "type": "tab",
                   "id": "#9414a39d-562a-4e59-acd3-731faf69cc76",
-                  "name": "Idle",
+                  "name": "Main",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[Thermostat.eez-project]:/userPages/1",
+                    "objectPath": "[Thermostat.eez-project]:/userPages/0",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -217,7 +216,8 @@
                   },
                   "icon": "material:settings"
                 }
-              ]
+              ],
+              "active": true
             },
             {
               "type": "row",
@@ -1077,9 +1077,7 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "7": {
-            "$selected": true
-          },
+          "7": {},
           "8": {}
         }
       },

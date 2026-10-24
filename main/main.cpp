@@ -1,4 +1,7 @@
-#define THERMOSTAT_WIFI 1
+// #define THERMOSTAT_WIFI 1
+// Erase the saved WiFi credentials at every boot so provisioning starts over
+// (thermostat settings are left alone). Needs THERMOSTAT_WIFI. Flash once, then comment out again.
+// #define THERMOSTAT_WIFI_RESET 1
 
 #include <stdio.h>
 #include <string.h>
@@ -88,6 +91,26 @@ const char *get_var_mode_string() {
 void set_var_mode_string(const char *value) {
     strncpy(mode_string, value, sizeof(mode_string) / sizeof(char));
     mode_string[sizeof(mode_string) / sizeof(char) - 1] = 0;
+}
+
+static int32_t humidity;
+char pressure_string[16] = { 0 };
+
+int32_t get_var_humidity() {
+    return humidity;
+}
+
+void set_var_humidity(int32_t value) {
+    humidity = value;
+}
+
+const char *get_var_pressure_string() {
+    return pressure_string;
+}
+
+void set_var_pressure_string(const char *value) {
+    strncpy(pressure_string, value, sizeof(pressure_string) / sizeof(char));
+    pressure_string[sizeof(pressure_string) / sizeof(char) - 1] = 0;
 }
 
 
@@ -830,6 +853,10 @@ static void monitor_sensors(void *arg)
     while (true) {
         if (bme->read(data) == ESP_OK) {
             set_var_current_temp(data.temperature_f);
+            set_var_humidity((int32_t)data.humidity_pct);
+            char pressure_text[16];
+            snprintf(pressure_text, sizeof(pressure_text), "%.2f", data.pressure_inhg);
+            set_var_pressure_string(pressure_text);
             ESP_LOGI(TAG, "BME280: %d°F  %lu%%RH  %.2f inHg",
                      (int)data.temperature_f,
                      (unsigned long)data.humidity_pct,
@@ -849,6 +876,20 @@ static void wifi_task(void *arg)
 {
     (void)arg;
     static WifiProvisioner provisioner;
+
+    // This section is only used for testing if you want to get rid of the provisioned WiFi
+#if THERMOSTAT_WIFI_RESET
+    {
+        // Same namespace the provisioner stores its credentials in
+        nvs_handle_t h;
+        if (nvs_open("wifi_prov", NVS_READWRITE, &h) == ESP_OK) {
+            nvs_erase_all(h);
+            nvs_commit(h);
+            nvs_close(h);
+            ESP_LOGW(TAG, "THERMOSTAT_WIFI_RESET: saved WiFi credentials erased");
+        }
+    }
+#endif
 
     if (provisioner.is_provisioned()) {
         provisioner.get_credentials();

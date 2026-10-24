@@ -739,6 +739,7 @@ void set_new_mode(thermostat_mode_t new_mode)
             current_mode = MODE_OFF;
             break;
     }
+    ESP_LOGI(TAG, "Mode applied: %d", (int)current_mode);
     store_int32("mode", current_mode);
 }
 
@@ -752,7 +753,9 @@ void outline_opa_anim_cb(lv_anim_t* animation_object, int32_t value)
 // Function to call whenever your app state changes
 void toggle_ring_fade(bool enable)
 {
-    lv_anim_delete(objects.main_container, (lv_anim_exec_xcb_t)outline_opa_anim_cb);
+    // The fade uses a custom exec callback, which lv_anim_delete() only matches when exec_cb is
+    // NULL, so remove every animation on the ring instead of leaving old fades running
+    lv_anim_delete(objects.main_container, NULL);
 
     lv_anim_t animation_object;
     lv_anim_init(&animation_object);
@@ -788,6 +791,8 @@ void monitor_state(void *arg)
             // See if we should turn off
             if (((setpoint + temperature_hysteresis) <= current_temp) || (current_mode == MODE_OFF)) {
                 current_state = STATE_OFF;
+                ESP_LOGI(TAG, "State -> OFF (temp %d, setpoint %d, hysteresis %d, mode %d)",
+                         (int)current_temp, (int)setpoint, (int)temperature_hysteresis, (int)current_mode);
                 if (lvgl_port_lock(0)) {
                     toggle_ring_fade(false);
                     lvgl_port_unlock();
@@ -798,6 +803,8 @@ void monitor_state(void *arg)
             // See if we should turn on
             if (((current_temp + temperature_hysteresis) <= setpoint) && (current_mode != MODE_OFF)) {
                 current_state = STATE_ON;
+                ESP_LOGI(TAG, "State -> ON (temp %d, setpoint %d, hysteresis %d, mode %d)",
+                         (int)current_temp, (int)setpoint, (int)temperature_hysteresis, (int)current_mode);
                 if (lvgl_port_lock(0)) {
                     toggle_ring_fade(true);
                     lvgl_port_unlock();

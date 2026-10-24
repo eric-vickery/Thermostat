@@ -1,3 +1,5 @@
+#define THERMOSTAT_WIFI 1
+
 #include <stdio.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
@@ -20,7 +22,11 @@
 #include "nvs.h"
 
 #include "neopixel.h"
-#include "bme280.h"
+#include "bme280.hpp"
+
+#if THERMOSTAT_WIFI
+#include "wifi_provisioner.hpp"
+#endif
 
 #include "ui.h"
 #include "screens.h"
@@ -35,17 +41,17 @@ typedef enum {
     MODE_OFF,
     MODE_MANUAL,
     MODE_SCHEDULE,
-} mode_t;
+} thermostat_mode_t;
 
-void request_new_mode(mode_t new_mode);
+void request_new_mode(thermostat_mode_t new_mode);
 
 #define SETPOINT_MIN       50
 #define SETPOINT_MAX       90
 #define LOCK_IN_DELAY_MS   2500
 
 static state_t current_state;
-static mode_t requested_mode; 
-static mode_t current_mode; 
+static thermostat_mode_t requested_mode; 
+static thermostat_mode_t current_mode; 
 static int32_t temperature_hysteresis;
 static uint32_t setpoint_changed_time;
 static uint32_t mode_changed_time;
@@ -87,6 +93,11 @@ void set_var_mode_string(const char *value) {
 
 static const char *TAG = "Thermostat";
 
+#define PIN_BME_SDA     GPIO_NUM_38
+#define PIN_BME_SCL     GPIO_NUM_39
+
+static BME280 bme280(I2C_NUM_1, PIN_BME_SDA, PIN_BME_SCL);
+
 #define PIN_POWER_LED   GPIO_NUM_40
 
 #define PIN_BL          46
@@ -95,11 +106,11 @@ static const char *TAG = "Thermostat";
 #define BL_LEDC_FREQ_HZ 5000
 
 #define LCD_HOST        SPI2_HOST
-#define PIN_SCLK        10
-#define PIN_MOSI        11
-#define PIN_CS          9
-#define PIN_DC          3
-#define PIN_RST         14
+#define PIN_SCLK        GPIO_NUM_10
+#define PIN_MOSI        GPIO_NUM_11
+#define PIN_CS          GPIO_NUM_9
+#define PIN_DC          GPIO_NUM_3
+#define PIN_RST         GPIO_NUM_14
 
 #define LCD_H_RES       240
 #define LCD_V_RES       240
@@ -109,15 +120,15 @@ static const char *TAG = "Thermostat";
 #define PIXEL_COUNT     5
 #define NEOPIXEL_PIN    GPIO_NUM_48
 
-#define ENCODER_A_PIN   45
-#define ENCODER_B_PIN   42
-#define SWITCH_PIN      41
+#define ENCODER_A_PIN   GPIO_NUM_45
+#define ENCODER_B_PIN   GPIO_NUM_42
+#define SWITCH_PIN      GPIO_NUM_41
 
 #define TOUCH_I2C_NUM          I2C_NUM_0
-#define PIN_NUM_SDA            6
-#define PIN_NUM_SCL            7
-#define PIN_NUM_TOUCH_RST      13
-#define PIN_NUM_TOUCH_INT      5
+#define PIN_NUM_SDA            GPIO_NUM_6
+#define PIN_NUM_SCL            GPIO_NUM_7
+#define PIN_NUM_TOUCH_RST      GPIO_NUM_13
+#define PIN_NUM_TOUCH_INT      GPIO_NUM_5
 
 static int32_t inactivity_timeout_ms;
 
@@ -176,7 +187,7 @@ static void IRAM_ATTR enc_isr_handler(void *arg)
     if (delta == 0) {
         return;
     }
-    s_enc_accum += delta;
+    s_enc_accum = s_enc_accum + delta;
     if (s_enc_accum >= 4 || s_enc_accum <= -4) {
         input_event_t ev = (s_enc_accum > 0) ? INPUT_ENC_CW : INPUT_ENC_CCW;
         s_enc_accum = 0;
@@ -195,7 +206,7 @@ void IRAM_ATTR buttonISR(void *arg) {
     if (interruptTime - lastInterruptTime > debounceTime) {
         if (!gpio_get_level(SWITCH_PIN)) {     // active low
             lastPressTime = interruptTime;
-            clickCount++;
+            clickCount = clickCount + 1;
             input_event_t ev = INPUT_BTN_PRESS;
             BaseType_t hp_woken = pdFALSE;
             xQueueSendFromISR(s_input_queue, &ev, &hp_woken);
@@ -250,13 +261,12 @@ static int32_t read_int32_with_default(const char* key, int32_t default_value)
 
 static void encoder_init(void)
 {
-    gpio_config_t io_enc = {
-        .pin_bit_mask = (1ULL << ENCODER_A_PIN) | (1ULL << ENCODER_B_PIN),
-        .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_ENABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_ANYEDGE,
-    };
+    gpio_config_t io_enc = {};
+    io_enc.pin_bit_mask = (1ULL << ENCODER_A_PIN) | (1ULL << ENCODER_B_PIN);
+    io_enc.mode = GPIO_MODE_INPUT;
+    io_enc.pull_up_en = GPIO_PULLUP_ENABLE;
+    io_enc.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_enc.intr_type = GPIO_INTR_ANYEDGE;
     ESP_ERROR_CHECK(gpio_config(&io_enc));
 
     s_enc_last = (gpio_get_level(ENCODER_A_PIN) << 1) | gpio_get_level(ENCODER_B_PIN);
@@ -289,39 +299,42 @@ static void touch_init(void) {
     // ----------------------------------------------------
     // Initialize CST816S Touch via I2C
     // ----------------------------------------------------
-    i2c_master_bus_config_t bus_config = {
-        .clk_source = I2C_CLK_SRC_DEFAULT,
-        .i2c_port = TOUCH_I2C_NUM, // Or -1 to let ESP-IDF auto-allocate an available port
-        .scl_io_num = PIN_NUM_SCL,
-        .sda_io_num = PIN_NUM_SDA,
-        .glitch_ignore_cnt = 7,
-        .flags.enable_internal_pullup = true,
-    };
+    i2c_master_bus_config_t bus_config = {};
+    bus_config.clk_source = I2C_CLK_SRC_DEFAULT;
+    bus_config.i2c_port = TOUCH_I2C_NUM; // Or -1 to let ESP-IDF auto-allocate an available port
+    bus_config.scl_io_num = (gpio_num_t)PIN_NUM_SCL;
+    bus_config.sda_io_num = (gpio_num_t)PIN_NUM_SDA;
+    bus_config.glitch_ignore_cnt = 7;
+    bus_config.flags.enable_internal_pullup = true;
 
     i2c_master_bus_handle_t bus_handle;
     ESP_LOGI(TAG, "Calling i2c_new_master_bus");
     ESP_ERROR_CHECK(i2c_new_master_bus(&bus_config, &bus_handle));
 
     esp_lcd_panel_io_handle_t tp_io_handle = NULL;
-    esp_lcd_panel_io_i2c_config_t tp_io_config = ESP_LCD_TOUCH_IO_I2C_CST816S_CONFIG();
+    // The vendor macro uses out-of-order designated initializers, which C++ rejects
+    esp_lcd_panel_io_i2c_config_t tp_io_config = {};
+    tp_io_config.dev_addr = ESP_LCD_TOUCH_IO_I2C_CST816S_ADDRESS;
+    tp_io_config.scl_speed_hz = 100000;
+    tp_io_config.control_phase_bytes = 1;
+    tp_io_config.dc_bit_offset = 0;
+    tp_io_config.lcd_cmd_bits = 8;
+    tp_io_config.lcd_param_bits = 0;
+    tp_io_config.flags.dc_low_on_data = 0;
+    tp_io_config.flags.disable_control_phase = 1;
     ESP_LOGI(TAG, "Calling esp_lcd_new_panel_io_i2c");
     esp_lcd_new_panel_io_i2c(bus_handle, &tp_io_config, &tp_io_handle);
 
-    esp_lcd_touch_config_t tp_cfg = {
-        .x_max = LCD_H_RES,
-        .y_max = LCD_V_RES,
-        .rst_gpio_num = PIN_NUM_TOUCH_RST,
-        .int_gpio_num = PIN_NUM_TOUCH_INT,
-        .levels = {
-            .reset = 0,
-            .interrupt = 0,
-        },
-        .flags = {
-            .swap_xy = 0,
-            .mirror_x = 0,
-            .mirror_y = 0,
-        },
-    };
+    esp_lcd_touch_config_t tp_cfg = {};
+    tp_cfg.x_max = LCD_H_RES;
+    tp_cfg.y_max = LCD_V_RES;
+    tp_cfg.rst_gpio_num = (gpio_num_t)PIN_NUM_TOUCH_RST;
+    tp_cfg.int_gpio_num = (gpio_num_t)PIN_NUM_TOUCH_INT;
+    tp_cfg.levels.reset = 0;
+    tp_cfg.levels.interrupt = 0;
+    tp_cfg.flags.swap_xy = 0;
+    tp_cfg.flags.mirror_x = 0;
+    tp_cfg.flags.mirror_y = 0;
     ESP_LOGI(TAG, "Calling esp_lcd_touch_new_i2c_cst816s");
     esp_lcd_touch_new_i2c_cst816s(tp_io_handle, &tp_cfg, &tp_handle);
 }
@@ -331,24 +344,21 @@ static void touch_init(void) {
  * ------------------------------------------------------------------------ */
 static void backlight_init(void)
 {
-    ledc_timer_config_t timer = {
-        .speed_mode = LEDC_LOW_SPEED_MODE,
-        .timer_num = BL_LEDC_TIMER,
-        .duty_resolution = LEDC_TIMER_8_BIT,
-        .freq_hz = BL_LEDC_FREQ_HZ,
-        .clk_cfg = LEDC_AUTO_CLK,
-    };
+    ledc_timer_config_t timer = {};
+    timer.speed_mode = LEDC_LOW_SPEED_MODE;
+    timer.timer_num = BL_LEDC_TIMER;
+    timer.duty_resolution = LEDC_TIMER_8_BIT;
+    timer.freq_hz = BL_LEDC_FREQ_HZ;
+    timer.clk_cfg = LEDC_AUTO_CLK;
     ESP_ERROR_CHECK(ledc_timer_config(&timer));
 
-    ledc_channel_config_t channel = {
-        .speed_mode = LEDC_LOW_SPEED_MODE,
-        .channel = BL_LEDC_CHANNEL,
-        .timer_sel = BL_LEDC_TIMER,
-        .intr_type = LEDC_INTR_DISABLE,
-        .gpio_num = PIN_BL,
-        .duty = 0,
-        .hpoint = 0,
-    };
+    ledc_channel_config_t channel = {};
+    channel.speed_mode = LEDC_LOW_SPEED_MODE;
+    channel.channel = BL_LEDC_CHANNEL;
+    channel.timer_sel = BL_LEDC_TIMER;
+    channel.gpio_num = PIN_BL;
+    channel.duty = 0;
+    channel.hpoint = 0;
     ESP_ERROR_CHECK(ledc_channel_config(&channel));
     ledc_fade_func_install(0);
 }
@@ -372,26 +382,23 @@ static void backlight_set(uint32_t percent, uint32_t fade_ms)
 
 static void power_led_init(void)
 {
-    gpio_config_t io_led = {
-        .pin_bit_mask = 1ULL << PIN_POWER_LED,
-        .mode = GPIO_MODE_OUTPUT,
-    };
+    gpio_config_t io_led = {};
+    io_led.pin_bit_mask = 1ULL << PIN_POWER_LED;
+    io_led.mode = GPIO_MODE_OUTPUT;
     ESP_ERROR_CHECK(gpio_config(&io_led));
     gpio_set_level(PIN_POWER_LED, 0);
 }
 
 static void power_init(void) {
     // Turn on both rails
-    gpio_config_t io_pin_1 = {
-        .pin_bit_mask = 1ULL << GPIO_NUM_1,
-        .mode = GPIO_MODE_OUTPUT,
-    };
+    gpio_config_t io_pin_1 = {};
+    io_pin_1.pin_bit_mask = 1ULL << GPIO_NUM_1;
+    io_pin_1.mode = GPIO_MODE_OUTPUT;
     ESP_ERROR_CHECK(gpio_config(&io_pin_1));
     gpio_set_level(GPIO_NUM_1, 1);
-    gpio_config_t io_pin_2 = {
-        .pin_bit_mask = 1ULL << GPIO_NUM_2,
-        .mode = GPIO_MODE_OUTPUT,
-    };
+    gpio_config_t io_pin_2 = {};
+    io_pin_2.pin_bit_mask = 1ULL << GPIO_NUM_2;
+    io_pin_2.mode = GPIO_MODE_OUTPUT;
     ESP_ERROR_CHECK(gpio_config(&io_pin_2));
     gpio_set_level(GPIO_NUM_2, 1);
 }
@@ -467,26 +474,22 @@ static void lvgl_initialize(void) {
     lvgl_port_init(&lvgl_cfg);
 
     // Add display to LVGL
-    const lvgl_port_display_cfg_t disp_cfg = {
-        .io_handle = io_handle,
-        .panel_handle = panel_handle,
-        .buffer_size = LCD_H_RES * CHUNK_LINES,
-        .double_buffer = true,
-        .hres = LCD_H_RES,
-        .vres = LCD_V_RES,
-        .monochrome = false,
-        .flags = {
-            .buff_dma = true,
-            .swap_bytes = true,
-        }
-    };
+    lvgl_port_display_cfg_t disp_cfg = {};
+    disp_cfg.io_handle = io_handle;
+    disp_cfg.panel_handle = panel_handle;
+    disp_cfg.buffer_size = LCD_H_RES * CHUNK_LINES;
+    disp_cfg.double_buffer = true;
+    disp_cfg.hres = LCD_H_RES;
+    disp_cfg.vres = LCD_V_RES;
+    disp_cfg.monochrome = false;
+    disp_cfg.flags.buff_dma = true;
+    disp_cfg.flags.swap_bytes = true;
     lv_display_t *lvgl_disp = lvgl_port_add_disp(&disp_cfg);
 
     // Add Touchpad Input to LVGL
-    const lvgl_port_touch_cfg_t touch_cfg = {
-        .disp = lvgl_disp,
-        .handle = tp_handle,
-    };
+    lvgl_port_touch_cfg_t touch_cfg = {};
+    touch_cfg.disp = lvgl_disp;
+    touch_cfg.handle = tp_handle;
     // lv_indev_t *lvgl_touch = lvgl_port_add_touch(&touch_cfg);
     lvgl_port_add_touch(&touch_cfg);
 
@@ -518,35 +521,32 @@ static void lvgl_initialize(void) {
 
 static void display_init(void) {
     // SPI bus
-    spi_bus_config_t bus_cfg = {
-        .sclk_io_num = PIN_SCLK,
-        .mosi_io_num = PIN_MOSI,
-        .miso_io_num = -1,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-        .max_transfer_sz = LCD_H_RES * CHUNK_LINES * sizeof(uint16_t),
-    };
+    spi_bus_config_t bus_cfg = {};
+    bus_cfg.sclk_io_num = PIN_SCLK;
+    bus_cfg.mosi_io_num = PIN_MOSI;
+    bus_cfg.miso_io_num = -1;
+    bus_cfg.quadwp_io_num = -1;
+    bus_cfg.quadhd_io_num = -1;
+    bus_cfg.max_transfer_sz = LCD_H_RES * CHUNK_LINES * sizeof(uint16_t);
     ESP_ERROR_CHECK(spi_bus_initialize(LCD_HOST, &bus_cfg, SPI_DMA_CH_AUTO));
 
     // Panel IO (SPI)
-    esp_lcd_panel_io_spi_config_t io_cfg = {
-        .dc_gpio_num = PIN_DC,
-        .cs_gpio_num = PIN_CS,
-        .pclk_hz = LCD_PIXEL_CLK,
-        .lcd_cmd_bits = 8,
-        .lcd_param_bits = 8,
-        .spi_mode = 0,
-        .trans_queue_depth = 10,
-    };
+    esp_lcd_panel_io_spi_config_t io_cfg = {};
+    io_cfg.dc_gpio_num = PIN_DC;
+    io_cfg.cs_gpio_num = PIN_CS;
+    io_cfg.pclk_hz = LCD_PIXEL_CLK;
+    io_cfg.lcd_cmd_bits = 8;
+    io_cfg.lcd_param_bits = 8;
+    io_cfg.spi_mode = 0;
+    io_cfg.trans_queue_depth = 10;
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_HOST,
                                              &io_cfg, &io_handle));
 
     // GC9A01 panel driver
-    esp_lcd_panel_dev_config_t panel_cfg = {
-        .reset_gpio_num = PIN_RST,
-        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR,
-        .bits_per_pixel = 16,
-    };
+    esp_lcd_panel_dev_config_t panel_cfg = {};
+    panel_cfg.reset_gpio_num = PIN_RST;
+    panel_cfg.rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR;
+    panel_cfg.bits_per_pixel = 16;
     ESP_ERROR_CHECK(esp_lcd_new_panel_gc9a01(io_handle, &panel_cfg, &panel_handle));
 
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
@@ -565,7 +565,7 @@ void display_fill(uint16_t color)
     }
     color = __builtin_bswap16(color);
     size_t buf_size = LCD_H_RES * CHUNK_LINES * sizeof(uint16_t);
-    uint16_t *buf = heap_caps_malloc(buf_size, MALLOC_CAP_DMA);
+    uint16_t *buf = (uint16_t *)heap_caps_malloc(buf_size, MALLOC_CAP_DMA);
     if (buf == NULL) {
         ESP_LOGE(TAG, "Failed to allocate line buffer");
         return;
@@ -593,7 +593,7 @@ static void deactivate_idle_mode()
         
         // Load the main operational screen back
         if (lvgl_port_lock(0)) {
-            lv_screen_load(objects.main);
+            eez_flow_set_screen(SCREEN_ID_MAIN, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0);
             lvgl_port_unlock();
         }
     }
@@ -606,7 +606,7 @@ static void activate_idle_mode()
         
         // Load the empty/minimalistic low-power screen
         if (lvgl_port_lock(0)) {
-            lv_screen_load(objects.idle);
+            eez_flow_set_screen(SCREEN_ID_IDLE, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0);
             lvgl_port_unlock();
         }
         
@@ -677,7 +677,7 @@ static void input_task(void *arg)
 }
 
 // The reason there is a request_new_mode and a set_new_mode is to keep the heater from changing modes while the user is toggling through the modes in the ui
-void request_new_mode(mode_t new_mode)
+void request_new_mode(thermostat_mode_t new_mode)
 {
     mode_changed_time = esp_timer_get_time()/1000;
 
@@ -699,7 +699,7 @@ void request_new_mode(mode_t new_mode)
     }
 }
 
-void set_new_mode(mode_t new_mode)
+void set_new_mode(thermostat_mode_t new_mode)
 {
     switch(new_mode) {
         case MODE_MANUAL:
@@ -813,7 +813,7 @@ void monitor_idle_timeout(void *arg)
     while (true) {
         uint32_t inactive_time = lv_display_get_inactive_time(NULL); 
 
-        if (inactive_time >= inactivity_timeout_ms) {
+        if (inactive_time >= (uint32_t)inactivity_timeout_ms) {
             activate_idle_mode();
         }
         else {
@@ -825,24 +825,47 @@ void monitor_idle_timeout(void *arg)
 
 static void monitor_sensors(void *arg)
 {
-    (void)arg;
-    bme280_data_t data;
+    BME280 *bme = static_cast<BME280 *>(arg);
+    BME280::Data data;
     while (true) {
-        if (bme280_read(&data) == ESP_OK) {
+        if (bme->read(data) == ESP_OK) {
             set_var_current_temp(data.temperature_f);
-            ESP_LOGI(TAG, "BME280: %d°F  %lu%%RH  %lu Pa",
+            ESP_LOGI(TAG, "BME280: %d°F  %lu%%RH  %.2f inHg",
                      (int)data.temperature_f,
                      (unsigned long)data.humidity_pct,
-                     (unsigned long)data.pressure_pa);
+                     data.pressure_inhg);
         }
         vTaskDelay(pdMS_TO_TICKS(5000));
     }
 }
 
+#if THERMOSTAT_WIFI
+#define WIFI_AP_SSID     "Thermostat-Setup"
+#define WIFI_HOSTNAME    "thermostat"
+
+// start_provisioning() blocks until the user submits credentials through the
+// captive portal, so this runs in its own task and the thermostat keeps working.
+static void wifi_task(void *arg)
+{
+    (void)arg;
+    static WifiProvisioner provisioner;
+
+    if (provisioner.is_provisioned()) {
+        provisioner.get_credentials();
+    } else {
+        ESP_LOGI(TAG, "No WiFi credentials, starting captive portal \"%s\"", WIFI_AP_SSID);
+        provisioner.start_provisioning(WIFI_AP_SSID, true);
+    }
+    provisioner.connect_sta();
+
+    vTaskDelete(NULL);
+}
+#endif
+
 static void set_startup_values(void)
 {
     current_state = STATE_OFF;
-    requested_mode = read_int32_with_default("mode", (int32_t)MODE_MANUAL);
+    requested_mode = (thermostat_mode_t)read_int32_with_default("mode", (int32_t)MODE_MANUAL);
     set_new_mode(requested_mode);
     temperature_hysteresis = read_int32_with_default("temp_hyst", 2);
     requested_setpoint = read_int32_with_default("setpoint", 68);
@@ -851,7 +874,7 @@ static void set_startup_values(void)
     current_temp = 87; /* replaced by BME280 task once it starts */
 }
 
-void app_main(void)
+extern "C" void app_main(void)
 {
     // Create the mutex before launching the task
     lvgl_mutex = xSemaphoreCreateMutex();
@@ -880,7 +903,7 @@ void app_main(void)
     touch_init();
 
     ESP_LOGI(TAG, "BME280 Init");
-    bme280_init();
+    ESP_ERROR_CHECK_WITHOUT_ABORT(bme280.init());
 
     lvgl_initialize();
     lv_display_trigger_activity(NULL); 
@@ -935,8 +958,19 @@ void app_main(void)
         monitor_sensors,
         "sensors",
         4096,
-        NULL,
+        &bme280,
         2,
         NULL
     );
+
+#if THERMOSTAT_WIFI
+    xTaskCreate(
+        wifi_task,
+        "wifi",
+        8192,
+        NULL,
+        3,
+        NULL
+    );
+#endif
 }

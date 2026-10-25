@@ -2,6 +2,8 @@
 // Erase the saved WiFi credentials at every boot so provisioning starts over
 // (thermostat settings are left alone). Needs THERMOSTAT_WIFI. Flash once, then comment out again.
 // #define THERMOSTAT_WIFI_RESET 1
+// ESP-NOW master that sends the heater state to a slave. Needs THERMOSTAT_WIFI.
+// #define THERMOSTAT_ESPNOW 1
 
 #include <stdio.h>
 #include <string.h>
@@ -29,6 +31,9 @@
 
 #if THERMOSTAT_WIFI
 #include "wifi_provisioner.hpp"
+#if THERMOSTAT_ESPNOW
+#include "esp_now_master.hpp"
+#endif
 #endif
 
 #include "ui.h"
@@ -783,6 +788,15 @@ void toggle_ring_fade(bool enable)
     lv_anim_start(&animation_object);
 }
 
+#if THERMOSTAT_WIFI && THERMOSTAT_ESPNOW
+static EspNowMaster espnow_master;
+
+static bool heater_is_on(void)
+{
+    return current_state == STATE_ON;
+}
+#endif
+
 void monitor_state(void *arg) 
 {
     (void)arg;
@@ -797,6 +811,9 @@ void monitor_state(void *arg)
                     toggle_ring_fade(false);
                     lvgl_port_unlock();
                 }
+#if THERMOSTAT_WIFI && THERMOSTAT_ESPNOW
+                espnow_master.send_now();
+#endif
             }
         }
         else { // Must be in STATE_OFF
@@ -809,6 +826,9 @@ void monitor_state(void *arg)
                     toggle_ring_fade(true);
                     lvgl_port_unlock();
                 }
+#if THERMOSTAT_WIFI && THERMOSTAT_ESPNOW
+                espnow_master.send_now();
+#endif
             }
         }
         vTaskDelay(pdMS_TO_TICKS(400));
@@ -911,6 +931,11 @@ static void wifi_task(void *arg)
         provisioner.start_provisioning(WIFI_AP_SSID, true);
     }
     provisioner.connect_sta();
+
+#if THERMOSTAT_ESPNOW
+    // connect_sta() starts the radio; ESP-NOW follows the router's channel from here
+    ESP_ERROR_CHECK_WITHOUT_ABORT(espnow_master.begin(heater_is_on));
+#endif
 
     vTaskDelete(NULL);
 }

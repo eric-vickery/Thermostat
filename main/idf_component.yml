@@ -3,7 +3,12 @@ dependencies:
   espressif/esp_lcd_gc9a01: "^2.0.0"
   zorxx/neopixel: "*"
   esp_lcd_touch_cst816s: "^1.1.2"
+  espressif/cjson: "^1.7.18"
   espressif/esp_lvgl_port: "^2.3.1"
+  wifi_provisioner:
+    git: https://github.com/eric-vickery/ESP32-SoftAP-Captive-Portal-WiFi-Provisioner.git
+    path: components/wifi_provisioner
+    version: develop
   # haruny/eez-framework: "*"
   # lovyangfx:
   #   git: https://github.com/lovyan03/LovyanGFX

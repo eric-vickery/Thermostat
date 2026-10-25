@@ -13,7 +13,7 @@
 objects_t objects;
 
 static const char *screen_names[] = { "Main", "Idle" };
-static const char *object_names[] = { "main", "idle", "main_container", "current_temp_arc", "setpoint_arc", "current_temp_label", "current_temp", "setpoint_label", "setpoint", "mode", "mode_button", "current_temp_arc_1", "current_temp_1" };
+static const char *object_names[] = { "main", "idle", "main_container", "current_temp_arc", "setpoint_arc", "current_temp_label", "current_temp", "setpoint_label", "setpoint", "mode_button", "mode_icon_off", "mode_icon_manual", "mode_icon_schedule", "humidity_label", "humidity", "pressure_label", "pressure", "current_temp_arc_1", "current_temp_1" };
 
 //
 // Event handlers
@@ -169,22 +169,11 @@ void create_screen_main() {
             lv_label_set_text(obj, "");
         }
         {
-            // Mode
-            lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.mode = obj;
-            lv_obj_set_pos(obj, 20, 126);
-            lv_obj_set_size(obj, 80, LV_SIZE_CONTENT);
-            lv_obj_set_style_text_font(obj, &lv_font_montserrat_12, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_color(obj, lv_color_hex(0xd9d9d9), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text(obj, "");
-        }
-        {
             // Mode Button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.mode_button = obj;
             lv_obj_set_pos(obj, 32, 110);
-            lv_obj_set_size(obj, 60, 60);
+            lv_obj_set_size(obj, 55, 55);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             {
@@ -196,7 +185,78 @@ void create_screen_main() {
                     lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_label_set_text_static(obj, "");
                 }
+                {
+                    // Mode Icon Off
+                    lv_obj_t *obj = lv_image_create(parent_obj);
+                    objects.mode_icon_off = obj;
+                    lv_obj_set_pos(obj, -9, -7);
+                    lv_obj_set_size(obj, 50, 50);
+                    lv_image_set_src(obj, &img_mode_off);
+                    lv_obj_remove_flag(obj, LV_OBJ_FLAG_ADV_HITTEST);
+                }
+                {
+                    // Mode Icon Manual
+                    lv_obj_t *obj = lv_image_create(parent_obj);
+                    objects.mode_icon_manual = obj;
+                    lv_obj_set_pos(obj, -9, -7);
+                    lv_obj_set_size(obj, 50, 50);
+                    lv_image_set_src(obj, &img_mode_manual);
+                    lv_obj_remove_flag(obj, LV_OBJ_FLAG_ADV_HITTEST);
+                }
+                {
+                    // Mode Icon Schedule
+                    lv_obj_t *obj = lv_image_create(parent_obj);
+                    objects.mode_icon_schedule = obj;
+                    lv_obj_set_pos(obj, -9, -7);
+                    lv_obj_set_size(obj, 50, 50);
+                    lv_image_set_src(obj, &img_mode_schedule);
+                    lv_obj_remove_flag(obj, LV_OBJ_FLAG_ADV_HITTEST);
+                }
             }
+        }
+        {
+            // Humidity Label
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.humidity_label = obj;
+            lv_obj_set_pos(obj, 45, 168);
+            lv_obj_set_size(obj, 60, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_10, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text_static(obj, "Humidity %");
+        }
+        {
+            // Humidity
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.humidity = obj;
+            lv_obj_set_pos(obj, 55, 181);
+            lv_obj_set_size(obj, 40, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text(obj, "");
+        }
+        {
+            // Pressure Label
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.pressure_label = obj;
+            lv_obj_set_pos(obj, 118, 168);
+            lv_obj_set_size(obj, 80, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_10, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text_static(obj, "Pressure inHg");
+        }
+        {
+            // Pressure
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.pressure = obj;
+            lv_obj_set_pos(obj, 123, 181);
+            lv_obj_set_size(obj, 70, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text(obj, "");
         }
     }
     
@@ -243,11 +303,59 @@ void tick_screen_main() {
         }
     }
     {
-        const char *new_val = evalTextProperty(flowState, 8, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.mode);
+        bool new_val = evalBooleanProperty(flowState, 10, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.mode_icon_off, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.mode_icon_off;
+            if (new_val) {
+                lv_obj_add_flag(objects.mode_icon_off, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_remove_flag(objects.mode_icon_off, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 11, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.mode_icon_manual, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.mode_icon_manual;
+            if (new_val) {
+                lv_obj_add_flag(objects.mode_icon_manual, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_remove_flag(objects.mode_icon_manual, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 12, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.mode_icon_schedule, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.mode_icon_schedule;
+            if (new_val) {
+                lv_obj_add_flag(objects.mode_icon_schedule, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_remove_flag(objects.mode_icon_schedule, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        const char *new_val = evalTextProperty(flowState, 14, 3, "Failed to evaluate Text in Label widget");
+        const char *cur_val = lv_label_get_text(objects.humidity);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.mode;
-            lv_label_set_text(objects.mode, new_val);
+            tick_value_change_obj = objects.humidity;
+            lv_label_set_text(objects.humidity, new_val);
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        const char *new_val = evalTextProperty(flowState, 16, 3, "Failed to evaluate Text in Label widget");
+        const char *cur_val = lv_label_get_text(objects.pressure);
+        if (strcmp(new_val, cur_val) != 0) {
+            tick_value_change_obj = objects.pressure;
+            lv_label_set_text(objects.pressure, new_val);
             tick_value_change_obj = NULL;
         }
     }

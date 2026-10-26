@@ -1,7 +1,7 @@
 #pragma once
 
-// Wire protocol shared by the thermostat (master) and its slave.
-// Copy this file unchanged into the slave project.
+// Wire protocol shared by the thermostat (master) and its remote.
+// Copy this file unchanged into the remote project.
 
 #include <stdint.h>
 
@@ -9,11 +9,11 @@
 #define ESPNOW_PROTO_VERSION  1
 
 typedef enum {
-    // Slave -> broadcast. Announces the slave so the master can pair with it.
+    // Remote -> broadcast. Announces the remote so the master can pair with it.
     // Repeat it until the first ESPNOW_MSG_STATE arrives, and again whenever
     // the heartbeats stop.
     ESPNOW_MSG_HELLO = 1,
-    // Master -> slave (unicast). Sent every few seconds; doubles as the heartbeat.
+    // Master -> remote (unicast). Sent every few seconds; doubles as the heartbeat.
     ESPNOW_MSG_STATE = 2,
 } espnow_msg_type_t;
 

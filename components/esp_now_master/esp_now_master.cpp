@@ -11,7 +11,7 @@
 static const char *TAG = "EspNowMaster";
 
 #define NVS_NAMESPACE "espnow_m"
-#define NVS_KEY_SLAVE "slave"
+#define NVS_KEY_REMOTE "remote"
 
 EspNowMaster *EspNowMaster::s_instance = nullptr;
 
@@ -25,7 +25,7 @@ esp_err_t EspNowMaster::begin(StateGetter getter)
     s_instance = this;
     _getter = getter;
 
-    // Modem sleep makes the radio miss broadcast frames, and the slave's hello is one
+    // Modem sleep makes the radio miss broadcast frames, and the remote's hello is one
     ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_set_ps(WIFI_PS_NONE));
 
     esp_err_t err = esp_now_init();
@@ -39,12 +39,12 @@ esp_err_t EspNowMaster::begin(StateGetter getter)
 
     _hello_queue = xQueueCreate(4, 6);
 
-    load_slave_();
-    if (_has_slave) {
+    load_remote_();
+    if (_has_remote) {
         uint8_t mac[6];
-        memcpy(mac, _slave_mac, 6);
-        if (set_slave_(mac) != ESP_OK) {
-            _has_slave = false;
+        memcpy(mac, _remote_mac, 6);
+        if (set_remote_(mac) != ESP_OK) {
+            _has_remote = false;
         }
     }
 
@@ -66,9 +66,9 @@ void EspNowMaster::send_now()
     xQueueSend(_hello_queue, wake, 0);
 }
 
-bool EspNowMaster::slave_online() const
+bool EspNowMaster::remote_online() const
 {
-    return _has_slave &&
+    return _has_remote &&
            (now_ms() - _last_delivered_ms) < (int64_t)(ESPNOW_SEND_INTERVAL_MS * ESPNOW_OFFLINE_INTERVALS);
 }
 
@@ -115,28 +115,28 @@ void EspNowMaster::task_()
 
 void EspNowMaster::handle_hello_(const uint8_t *mac)
 {
-    if (_has_slave && memcmp(mac, _slave_mac, 6) == 0) {
-        // Known slave (re)started or lost us; the send that follows brings it up to date
-        ESP_LOGI(TAG, "Hello from slave " MACSTR, MAC2STR(mac));
+    if (_has_remote && memcmp(mac, _remote_mac, 6) == 0) {
+        // Known remote (re)started or lost us; the send that follows brings it up to date
+        ESP_LOGI(TAG, "Hello from remote " MACSTR, MAC2STR(mac));
         return;
     }
-    if (_has_slave && slave_online()) {
-        ESP_LOGW(TAG, "Ignoring hello from " MACSTR ", slave " MACSTR " is online",
-                 MAC2STR(mac), MAC2STR(_slave_mac));
+    if (_has_remote && remote_online()) {
+        ESP_LOGW(TAG, "Ignoring hello from " MACSTR ", remote " MACSTR " is online",
+                 MAC2STR(mac), MAC2STR(_remote_mac));
         return;
     }
-    if (_has_slave) {
-        ESP_LOGW(TAG, "Slave " MACSTR " is offline, replacing it", MAC2STR(_slave_mac));
-        esp_now_del_peer(_slave_mac);
-        _has_slave = false;
+    if (_has_remote) {
+        ESP_LOGW(TAG, "Remote " MACSTR " is offline, replacing it", MAC2STR(_remote_mac));
+        esp_now_del_peer(_remote_mac);
+        _has_remote = false;
     }
-    if (set_slave_(mac) == ESP_OK) {
-        save_slave_();
-        ESP_LOGI(TAG, "Paired with new slave " MACSTR, MAC2STR(mac));
+    if (set_remote_(mac) == ESP_OK) {
+        save_remote_();
+        ESP_LOGI(TAG, "Paired with new remote " MACSTR, MAC2STR(mac));
     }
 }
 
-esp_err_t EspNowMaster::set_slave_(const uint8_t *mac)
+esp_err_t EspNowMaster::set_remote_(const uint8_t *mac)
 {
     esp_now_peer_info_t peer = {};
     memcpy(peer.peer_addr, mac, 6);
@@ -149,15 +149,15 @@ esp_err_t EspNowMaster::set_slave_(const uint8_t *mac)
         ESP_LOGE(TAG, "esp_now_add_peer failed: %s", esp_err_to_name(err));
         return err;
     }
-    memcpy(_slave_mac, mac, 6);
+    memcpy(_remote_mac, mac, 6);
     _last_delivered_ms = 0;
-    _has_slave = true;
+    _has_remote = true;
     return ESP_OK;
 }
 
 void EspNowMaster::send_state_()
 {
-    if (!_has_slave || !_getter) {
+    if (!_has_remote || !_getter) {
         return;
     }
     espnow_state_msg_t msg = {};
@@ -167,34 +167,34 @@ void EspNowMaster::send_state_()
     msg.on = _getter() ? 1 : 0;
     msg.seq = _seq++;
 
-    esp_err_t err = esp_now_send(_slave_mac, (const uint8_t *)&msg, sizeof(msg));
+    esp_err_t err = esp_now_send(_remote_mac, (const uint8_t *)&msg, sizeof(msg));
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "esp_now_send failed: %s", esp_err_to_name(err));
     }
 }
 
-void EspNowMaster::load_slave_()
+void EspNowMaster::load_remote_()
 {
     nvs_handle_t h;
     if (nvs_open(NVS_NAMESPACE, NVS_READONLY, &h) != ESP_OK) {
         return;
     }
-    size_t len = sizeof(_slave_mac);
-    if (nvs_get_blob(h, NVS_KEY_SLAVE, _slave_mac, &len) == ESP_OK && len == sizeof(_slave_mac)) {
-        _has_slave = true;
-        ESP_LOGI(TAG, "Loaded slave " MACSTR " from NVS", MAC2STR(_slave_mac));
+    size_t len = sizeof(_remote_mac);
+    if (nvs_get_blob(h, NVS_KEY_REMOTE, _remote_mac, &len) == ESP_OK && len == sizeof(_remote_mac)) {
+        _has_remote = true;
+        ESP_LOGI(TAG, "Loaded remote " MACSTR " from NVS", MAC2STR(_remote_mac));
     }
     nvs_close(h);
 }
 
-void EspNowMaster::save_slave_()
+void EspNowMaster::save_remote_()
 {
     nvs_handle_t h;
     if (nvs_open(NVS_NAMESPACE, NVS_READWRITE, &h) != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to open NVS to save slave");
+        ESP_LOGE(TAG, "Failed to open NVS to save remote");
         return;
     }
-    nvs_set_blob(h, NVS_KEY_SLAVE, _slave_mac, sizeof(_slave_mac));
+    nvs_set_blob(h, NVS_KEY_REMOTE, _remote_mac, sizeof(_remote_mac));
     nvs_commit(h);
     nvs_close(h);
 }

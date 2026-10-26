@@ -7,15 +7,15 @@
 #include "freertos/queue.h"
 #include "espnow_protocol.h"
 
-// ESP-NOW master. Sends the heater ON/OFF state to one slave every
-// ESPNOW_SEND_INTERVAL_MS. The slave announces itself with a broadcast hello;
+// ESP-NOW master. Sends the heater ON/OFF state to one remote every
+// ESPNOW_SEND_INTERVAL_MS. The remote announces itself with a broadcast hello;
 // the master pairs with it, remembers its MAC in NVS and from then on sends
 // unicast. The unicast peer uses channel 0, so it follows the channel the WiFi
 // STA is on (the router's channel).
 class EspNowMaster {
 public:
     static constexpr uint32_t ESPNOW_SEND_INTERVAL_MS = 3000;
-    // The slave counts as offline after this many intervals without a delivered message
+    // The remote counts as offline after this many intervals without a delivered message
     static constexpr uint32_t ESPNOW_OFFLINE_INTERVALS = 3;
 
     // Returns true when the heater is on
@@ -28,8 +28,8 @@ public:
     // Safe to call from any task; does nothing before begin().
     void send_now();
 
-    bool has_slave() const { return _has_slave; }
-    bool slave_online() const;
+    bool has_remote() const { return _has_remote; }
+    bool remote_online() const;
 
 private:
     static void task_entry_(void *arg);
@@ -38,15 +38,15 @@ private:
 
     void task_();
     void handle_hello_(const uint8_t *mac);
-    esp_err_t set_slave_(const uint8_t *mac);
+    esp_err_t set_remote_(const uint8_t *mac);
     void send_state_();
-    void load_slave_();
-    void save_slave_();
+    void load_remote_();
+    void save_remote_();
 
     StateGetter _getter = nullptr;
     QueueHandle_t _hello_queue = nullptr;
-    uint8_t _slave_mac[6] = {};
-    volatile bool _has_slave = false;
+    uint8_t _remote_mac[6] = {};
+    volatile bool _has_remote = false;
     volatile int64_t _last_delivered_ms = 0;
     uint8_t _seq = 0;
 

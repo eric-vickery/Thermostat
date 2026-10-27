@@ -6,6 +6,7 @@
 #include "idle_monitor.hpp"
 #include "input_controller.hpp"
 #include "power.hpp"
+#include "scheduler.hpp"
 #include "sensor_monitor.hpp"
 #include "settings.hpp"
 #include "status_leds.hpp"
@@ -32,12 +33,14 @@ static void mode_button_event_handler(lv_event_t *event)
 extern "C" void app_main(void)
 {
     Thermostat &thermostat = Thermostat::instance();
+    static Scheduler scheduler(thermostat);
     static SensorMonitor sensors(thermostat);
     static InputController input_controller(user_input, idle_monitor, thermostat);
 
     Settings &settings = Settings::instance();
     settings.init();
     thermostat.load();
+    scheduler.init();
 
     thermostat.set_heater_changed_callback([](bool on) {
         if (lvgl_port_lock(0)) {
@@ -73,6 +76,7 @@ extern "C" void app_main(void)
     input_controller.start();
     idle_monitor.start(settings.inactivity_timeout_ms());
     thermostat.start();
+    scheduler.start();
     sensors.start();
     connectivity.start();
 }

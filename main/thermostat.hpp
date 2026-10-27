@@ -46,6 +46,10 @@ public:
     int32_t mode_value() const { return mode_value_; }
     void set_mode_value(int32_t value) { mode_value_ = value; }
 
+    // Degrees of slack before the heater turns on or off. Takes effect immediately and is persisted.
+    int32_t temperature_hysteresis() const { return temperature_hysteresis_; }
+    void set_temperature_hysteresis(int32_t value);
+
     int32_t current_temp() const { return current_temp_; }
     void set_current_temp(int32_t value) { current_temp_ = value; }
     int32_t humidity() const { return humidity_; }

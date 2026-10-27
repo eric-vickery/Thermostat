@@ -8,7 +8,15 @@ class IdleMonitor {
 public:
     explicit IdleMonitor(Display &display) : display_(display) {}
 
-    void start(int32_t timeout_ms);
+    // Brightness values are backlight percents
+    void start(int32_t timeout_ms, int32_t active_brightness, int32_t idle_brightness);
+
+    // Takes effect immediately
+    void set_timeout_ms(int32_t timeout_ms) { timeout_ms_ = timeout_ms; }
+    // Backlight level while the screen is in use. Applied now unless the idle screen is showing.
+    void set_active_brightness(int32_t percent);
+    // Backlight level while the idle screen is showing. Applied now if it is showing.
+    void set_idle_brightness(int32_t percent);
 
     bool is_idle() const { return is_idle_; }
     void activate();
@@ -21,5 +29,6 @@ private:
     Display &display_;
     int32_t timeout_ms_ = 0;
     bool is_idle_ = false;
-    uint32_t brightness_before_idle_ = 0;
+    uint32_t active_brightness_ = 100;
+    uint32_t idle_brightness_ = 3;
 };

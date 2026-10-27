@@ -1,10 +1,12 @@
 #pragma once
 
-// WiFi provisioning and the ESP-NOW heater state link. Does nothing unless
-// THERMOSTAT_WIFI (and THERMOSTAT_ESPNOW) are enabled in thermostat_config.h.
+// WiFi provisioning, the REST API and the ESP-NOW heater state link
+class RestApi;
+
 class Connectivity {
 public:
-    void start();
+    // The REST API is started once WiFi is connected
+    void start(RestApi &rest_api);
     // Tell the remote the heater state changed
     void notify_heater_changed();
 };

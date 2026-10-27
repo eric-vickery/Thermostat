@@ -41,6 +41,8 @@ public:
     // modes while the user is toggling through the modes in the ui
     void request_new_mode(Mode new_mode);
     void toggle_mode();
+    // The mode that has been applied (as opposed to the one the ui is still toggling through)
+    Mode current_mode() const { return current_mode_; }
     int32_t mode_value() const { return mode_value_; }
     void set_mode_value(int32_t value) { mode_value_ = value; }
 

@@ -1,0 +1,46 @@
+/* Design tokens. Change these to re-skin the whole app. */
+:root {
+  --font-family: 'Montserrat Variable', 'Montserrat', system-ui, sans-serif;
+
+  --color-page: #101114;
+  --color-dial: #0b2bd6;
+  --color-dial-edge: #05071a;
+  --color-text: #ffffff;
+  --color-text-muted: rgba(255, 255, 255, 0.8);
+  --color-setpoint: #ffe21f;
+  --color-arc-track: #1d6fd8;
+  --color-arc-fill: #3fb0ee;
+  --color-heating: #ff7a2e;
+  --color-control: rgba(255, 255, 255, 0.08);
+  --color-control-hover: rgba(255, 255, 255, 0.16);
+  --color-control-active: #3fb0ee;
+  --color-control-active-text: #05071a;
+  --color-error: #ff6b6b;
+
+  --dial-max-size: 520px;
+  --radius-control: 999px;
+  --transition: 0.4s ease;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-text);
+  font-family: var(--font-family);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}

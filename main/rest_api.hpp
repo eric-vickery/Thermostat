@@ -7,7 +7,8 @@ class IdleMonitor;
 class Scheduler;
 class Thermostat;
 
-// JSON REST API over HTTP for the thermostat, its settings and the schedule.
+// HTTP server for the web app (files from the "www" SPIFFS partition, any unknown path gets
+// index.html) and a JSON REST API for the thermostat, its settings and the schedule.
 // No authentication, so it is only meant for a trusted LAN. Request bodies are small JSON
 // objects; PUT bodies are partial (only the fields present are changed) and every
 // successful call returns the resulting resource.
@@ -47,7 +48,11 @@ private:
     static esp_err_t schedule_get(httpd_req_t *req);
     static esp_err_t schedule_day(httpd_req_t *req);
 
+    // Serves the built web app from the "www" partition for any path the API doesn't claim
+    static esp_err_t static_file(httpd_req_t *req);
+
     esp_err_t handle_schedule_day(httpd_req_t *req);
+    void mount_web_files();
 
     Thermostat &thermostat_;
     Scheduler &scheduler_;

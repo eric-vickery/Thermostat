@@ -5,6 +5,7 @@
 #include <string.h>
 #include <strings.h>
 #include "esp_log.h"
+#include "esp_spiffs.h"
 #include "cJSON.h"
 
 #include "idle_monitor.hpp"
@@ -15,6 +16,10 @@
 static const char *TAG = "RestApi";
 
 #define MAX_BODY_SIZE   512
+
+#define WEB_BASE_PATH   "/www"
+#define WEB_PARTITION   "www"
+#define WEB_CHUNK_SIZE  1024
 
 #define HYSTERESIS_MIN  0
 #define HYSTERESIS_MAX  4
@@ -209,9 +214,11 @@ esp_err_t RestApi::start()
         return ESP_OK;
     }
 
+    mount_web_files();
+
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.max_uri_handlers = 12;
-    config.stack_size = 6144;
+    config.stack_size = 8192;
     config.uri_match_fn = httpd_uri_match_wildcard;
 
     esp_err_t err = httpd_start(&server_, &config);
@@ -230,6 +237,8 @@ esp_err_t RestApi::start()
         { "/api/schedule/*", HTTP_GET, schedule_day, this },
         { "/api/schedule/*", HTTP_POST, schedule_day, this },
         { "/api/schedule/*", HTTP_DELETE, schedule_day, this },
+        // Must stay last: handlers are matched in registration order
+        { "/*", HTTP_GET, static_file, this },
     };
     for (const httpd_uri_t &uri : uris) {
         err = httpd_register_uri_handler(server_, &uri);
@@ -243,6 +252,104 @@ esp_err_t RestApi::start()
 
     ESP_LOGI(TAG, "REST API started");
     return ESP_OK;
+}
+
+/* ------------------------------------------------------------------------
+ * Web app files
+ * ------------------------------------------------------------------------ */
+
+void RestApi::mount_web_files()
+{
+    esp_vfs_spiffs_conf_t conf = {};
+    conf.base_path = WEB_BASE_PATH;
+    conf.partition_label = WEB_PARTITION;
+    conf.max_files = 4;
+    conf.format_if_mount_failed = false;
+
+    esp_err_t err = esp_vfs_spiffs_register(&conf);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to mount the \"%s\" partition (%s), the web app won't be served",
+                 WEB_PARTITION, esp_err_to_name(err));
+    }
+}
+
+static const char *content_type_for(const char *path)
+{
+    const char *ext = strrchr(path, '.');
+    if (ext == nullptr) {
+        return "application/octet-stream";
+    }
+    static const struct { const char *ext; const char *type; } types[] = {
+        { ".html", "text/html" },
+        { ".js", "text/javascript" },
+        { ".css", "text/css" },
+        { ".json", "application/json" },
+        { ".svg", "image/svg+xml" },
+        { ".png", "image/png" },
+        { ".ico", "image/x-icon" },
+        { ".woff2", "font/woff2" },
+        { ".woff", "font/woff" },
+    };
+    for (const auto &t : types) {
+        if (strcasecmp(ext, t.ext) == 0) {
+            return t.type;
+        }
+    }
+    return "application/octet-stream";
+}
+
+esp_err_t RestApi::static_file(httpd_req_t *req)
+{
+    // Unknown API paths are errors, not the web app
+    if (strncmp(req->uri, "/api/", 5) == 0) {
+        return send_error(req, STATUS_NOT_FOUND, "not found");
+    }
+
+    char path[64] = WEB_BASE_PATH;
+    size_t base_len = strlen(WEB_BASE_PATH);
+    size_t uri_len = strcspn(req->uri, "?");
+    if (uri_len == 1 && req->uri[0] == '/') {
+        strcpy(path + base_len, "/index.html");
+    }
+    else if (base_len + uri_len >= sizeof(path) || strstr(req->uri, "..") != nullptr) {
+        return send_error(req, STATUS_NOT_FOUND, "not found");
+    }
+    else {
+        memcpy(path + base_len, req->uri, uri_len);
+        path[base_len + uri_len] = 0;
+    }
+
+    FILE *file = fopen(path, "r");
+    if (file == nullptr) {
+        // A path without an extension is a page route of the web app
+        if (strrchr(req->uri, '.') != nullptr) {
+            return send_error(req, STATUS_NOT_FOUND, "not found");
+        }
+        strcpy(path, WEB_BASE_PATH "/index.html");
+        file = fopen(path, "r");
+        if (file == nullptr) {
+            return send_error(req, STATUS_NOT_FOUND, "web app not installed");
+        }
+    }
+
+    bool is_html = strcmp(content_type_for(path), "text/html") == 0;
+    httpd_resp_set_type(req, content_type_for(path));
+    // Everything but index.html has a content hash in its name
+    httpd_resp_set_hdr(req, "Cache-Control", is_html ? "no-cache" : "public, max-age=31536000, immutable");
+
+    char chunk[WEB_CHUNK_SIZE];
+    esp_err_t err = ESP_OK;
+    size_t read;
+    while (err == ESP_OK && (read = fread(chunk, 1, sizeof(chunk), file)) > 0) {
+        err = httpd_resp_send_chunk(req, chunk, read);
+    }
+    fclose(file);
+    if (err != ESP_OK) {
+        // The client went away mid-transfer; abort the chunked response
+        httpd_resp_send_chunk(req, nullptr, 0);
+        return ESP_FAIL;
+    }
+    return httpd_resp_send_chunk(req, nullptr, 0);
 }
 
 /* ------------------------------------------------------------------------

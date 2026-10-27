@@ -13,6 +13,6 @@ file(GLOB UI_IMAGES ${UI_GLOB_MODE} "${CMAKE_CURRENT_SOURCE_DIR}/ui_image_*.c")
 file(GLOB UI_FONTS  ${UI_GLOB_MODE} "${CMAKE_CURRENT_SOURCE_DIR}/ui_font_*.c")
 
 idf_component_register(SRCS "images.c" "screens.c" "styles.c" "ui.c" ${UI_IMAGES} ${UI_FONTS}
-                       INCLUDE_DIRS "." "${CMAKE_CURRENT_SOURCE_DIR}/../eez-framework/src"
-                       REQUIRES lvgl__lvgl espressif__esp_lvgl_port
+                       INCLUDE_DIRS "."
+                       REQUIRES lvgl__lvgl espressif__esp_lvgl_port eez-framework
 )

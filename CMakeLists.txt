@@ -6,6 +6,10 @@ cmake_minimum_required(VERSION 3.22)
 add_compile_definitions(EEZ_FOR_LVGL)
 add_compile_definitions(LV_LVGL_H_INCLUDE_SIMPLE)
 
+# Set so that the eez-framework will compile correctly
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-error=deprecated-enum-float-conversion>)
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-enum-float-conversion>)
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 # "Trim" the build. Include the minimal set of components, main, and anything it depends on.
 idf_build_set_property(MINIMAL_BUILD ON)

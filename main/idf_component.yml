@@ -9,7 +9,9 @@ dependencies:
     git: https://github.com/eric-vickery/ESP32-SoftAP-Captive-Portal-WiFi-Provisioner.git
     path: components/wifi_provisioner
     version: develop
-  # haruny/eez-framework: "*"
+  eez-framework:
+    git: https://github.com/eez-open/eez-framework.git
+    version: master
   # lovyangfx:
   #   git: https://github.com/lovyan03/LovyanGFX
     # version: "^1.2.34"

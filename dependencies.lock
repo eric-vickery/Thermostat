@@ -1,4 +1,12 @@
 dependencies:
+  eez-framework:
+    component_hash: 21d202d3914cbfac88fb591ffd0b00837484185f1c0ee7a62bf85c3d7d8d3121
+    dependencies: []
+    source:
+      git: https://github.com/eez-open/eez-framework.git
+      path: .
+      type: git
+    version: f9aaa8fb56f86a508acc317d73ac012e0c260f85
   espressif/cjson:
     component_hash: e788323270d90738662d66fffa910bfe1fba019bba087f01557e70c40485b469
     dependencies:
@@ -102,6 +110,7 @@ dependencies:
       type: service
     version: 1.2.0
 direct_dependencies:
+- eez-framework
 - espressif/cjson
 - espressif/esp_lcd_gc9a01
 - espressif/esp_lcd_touch_cst816s
@@ -109,6 +118,6 @@ direct_dependencies:
 - idf
 - wifi_provisioner
 - zorxx/neopixel
-manifest_hash: 4e7b424a05d81eeb0ddeed3bfc524c1f55e3022722f307b5fef04a52270ede71
+manifest_hash: 2d7397496565ca10679362f87120474daacab7904c464105a02ebebe5e69f639
 target: esp32s3
 version: 3.0.0

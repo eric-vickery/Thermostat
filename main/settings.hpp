@@ -30,9 +30,13 @@ public:
     int32_t inactivity_timeout_ms();
     void set_inactivity_timeout_ms(int32_t value);
 
-    // Backlight brightness in percent
-    int32_t default_brightness();
-    void set_default_brightness(int32_t value);
+    // Backlight brightness in percent while the screen is in use
+    int32_t active_brightness();
+    void set_active_brightness(int32_t value);
+
+    // Backlight brightness in percent while the idle screen is showing
+    int32_t idle_brightness();
+    void set_idle_brightness(int32_t value);
 
 private:
     Settings() = default;

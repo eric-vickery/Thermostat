@@ -6,6 +6,7 @@
 #include "idle_monitor.hpp"
 #include "input_controller.hpp"
 #include "power.hpp"
+#include "rest_api.hpp"
 #include "scheduler.hpp"
 #include "sensor_monitor.hpp"
 #include "settings.hpp"
@@ -34,6 +35,7 @@ extern "C" void app_main(void)
 {
     Thermostat &thermostat = Thermostat::instance();
     static Scheduler scheduler(thermostat);
+    static RestApi rest_api(thermostat, scheduler, idle_monitor);
     static SensorMonitor sensors(thermostat);
     static InputController input_controller(user_input, idle_monitor, thermostat);
 
@@ -59,7 +61,7 @@ extern "C" void app_main(void)
 
     ESP_LOGI(TAG, "Backlight Init");
     display.init_backlight();
-    display.set_backlight(settings.default_brightness(), 0);
+    display.set_backlight(settings.active_brightness(), 0);
 
     ESP_LOGI(TAG, "Display Init");
     display.init_panel();
@@ -74,9 +76,9 @@ extern "C" void app_main(void)
     lv_display_trigger_activity(NULL);
 
     input_controller.start();
-    idle_monitor.start(settings.inactivity_timeout_ms());
+    idle_monitor.start(settings.inactivity_timeout_ms(), settings.active_brightness(), settings.idle_brightness());
     thermostat.start();
     scheduler.start();
     sensors.start();
-    connectivity.start();
+    connectivity.start(rest_api);
 }

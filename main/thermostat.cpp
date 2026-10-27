@@ -47,6 +47,12 @@ void Thermostat::set_requested_setpoint(int32_t value)
     }
 }
 
+void Thermostat::set_temperature_hysteresis(int32_t value)
+{
+    temperature_hysteresis_ = value;
+    Settings::instance().set_temperature_hysteresis(value);
+}
+
 void Thermostat::set_pressure_string(const char *value)
 {
     strncpy(pressure_string_, value, sizeof(pressure_string_) / sizeof(char));

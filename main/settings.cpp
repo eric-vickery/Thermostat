@@ -69,14 +69,24 @@ void Settings::set_inactivity_timeout_ms(int32_t value)
     store_int32("timeout_ms", value);
 }
 
-int32_t Settings::default_brightness()
+int32_t Settings::active_brightness()
 {
-    return read_int32_with_default("def_bright", 100);
+    return read_int32_with_default("act_bright", 100);
 }
 
-void Settings::set_default_brightness(int32_t value)
+void Settings::set_active_brightness(int32_t value)
 {
-    store_int32("def_bright", value);
+    store_int32("act_bright", value);
+}
+
+int32_t Settings::idle_brightness()
+{
+    return read_int32_with_default("idle_bright", 3);
+}
+
+void Settings::set_idle_brightness(int32_t value)
+{
+    store_int32("idle_bright", value);
 }
 
 void Settings::store_int32(const char *key, int32_t value)

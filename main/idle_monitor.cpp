@@ -7,10 +7,28 @@
 #include "ui.h"
 #include "screens.h"
 
-void IdleMonitor::start(int32_t timeout_ms)
+void IdleMonitor::start(int32_t timeout_ms, int32_t active_brightness, int32_t idle_brightness)
 {
     timeout_ms_ = timeout_ms;
+    active_brightness_ = active_brightness;
+    idle_brightness_ = idle_brightness;
     xTaskCreate(task, "idle_timeout", 4096, this, 2, NULL);
+}
+
+void IdleMonitor::set_active_brightness(int32_t percent)
+{
+    active_brightness_ = percent;
+    if (!is_idle_) {
+        display_.set_backlight(percent, 300);
+    }
+}
+
+void IdleMonitor::set_idle_brightness(int32_t percent)
+{
+    idle_brightness_ = percent;
+    if (is_idle_) {
+        display_.set_backlight(percent, 300);
+    }
 }
 
 void IdleMonitor::task(void *arg)
@@ -41,7 +59,7 @@ void IdleMonitor::deactivate()
         lv_display_trigger_activity(NULL);
 
         // Bring back the backlight smoothly (e.g., over 300ms)
-        display_.set_backlight(brightness_before_idle_, 300);
+        display_.set_backlight(active_brightness_, 300);
 
         // Load the main operational screen back
         if (lvgl_port_lock(0)) {
@@ -62,8 +80,7 @@ void IdleMonitor::activate()
             lvgl_port_unlock();
         }
 
-        // Fade out backlight completely over 500ms (or dim down to 5-10% duty)
-        brightness_before_idle_ = display_.backlight_brightness();
-        display_.set_backlight(3, 500);
+        // Dim the backlight to the idle level over 500ms
+        display_.set_backlight(idle_brightness_, 500);
     }
 }

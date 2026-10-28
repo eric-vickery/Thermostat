@@ -25,7 +25,7 @@ A WiFi-connected heating thermostat for the ESP32-S3, built around a round touch
 | --- | --- |
 | Elecrow CrowPanel 1.28" Rotary Display | ESP32-S3, 16 MB flash, octal PSRAM, 240x240 GC9A01 round LCD, CST816S touch, rotary encoder with push switch, NeoPixel ring |
 | BME280 breakout | I2C at address 0x76 |
-| Remote heater unit (optional) | Any ESP32 running a matching ESP-NOW receiver ([remote unit repo](TODO-REMOTE-REPO-URL)) |
+| Remote heater unit (optional) | Any ESP32 running a matching ESP-NOW receiver ([remote unit repo](https://github.com/eric-vickery/Thermostat-Remote)) |
 | Relay board (optional) | See [Optional local heater relay](#optional-local-heater-relay) |
 
 Pin assignments, as used in the firmware:
@@ -111,7 +111,9 @@ To start over, uncomment `THERMOSTAT_WIFI_RESET` in `main/thermostat_config.h`, 
 
 ### Pair the remote heater unit
 
-The thermostat sends the heater on/off state to a remote unit every 3 seconds over ESP-NOW. The remote broadcasts a hello, the thermostat pairs with it and stores its MAC address, and from then on messages are unicast on your router's WiFi channel. The remote counts as offline after 3 missed heartbeats. The wire protocol is in [`components/esp_now_master/include/espnow_protocol.h`](components/esp_now_master/include/espnow_protocol.h); copy it unchanged into the remote project. The matching remote firmware is at [TODO-REMOTE-REPO-URL](TODO-REMOTE-REPO-URL).
+The thermostat sends the heater on/off state to a remote unit every 3 seconds over ESP-NOW. The remote broadcasts a hello, the thermostat pairs with it and stores its MAC address, and from then on messages are unicast on your router's WiFi channel. The remote counts as offline after 3 missed heartbeats. The wire protocol is in [`components/esp_now_master/include/espnow_protocol.h`](components/esp_now_master/include/espnow_protocol.h); copy it unchanged into the remote project. The matching remote firmware is in [Thermostat-Remote](https://github.com/eric-vickery/Thermostat-Remote).
+
+If a paired remote stops responding, the WiFi symbol turns red with a "Missing Remote" note on the idle screen, and the web app shows "Missing Remote" in place of the heating status.
 
 ## REST API
 
@@ -119,7 +121,7 @@ All bodies are JSON. `PUT` bodies are partial, and every successful call returns
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/api/thermostat` | `mode` (`off`, `manual`, `schedule`), `setpoint`, `current_temp`, `humidity`, `pressure`, `heater_on` |
+| GET | `/api/thermostat` | `mode` (`off`, `manual`, `schedule`), `setpoint`, `current_temp`, `humidity`, `pressure`, `heater_on`, `remote_missing` |
 | PUT | `/api/thermostat` | Set `mode` and/or `setpoint` (50-90) |
 | GET / PUT | `/api/settings` | `temperature_hysteresis`, `inactivity_timeout_s`, `active_brightness`, `idle_brightness`, `altitude_ft` |
 | GET | `/api/schedule` | All seven days |

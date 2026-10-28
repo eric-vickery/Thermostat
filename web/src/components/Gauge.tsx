@@ -40,11 +40,14 @@ export default function Gauge({ min, max, current, setpoint }: GaugeProps) {
     <svg className="gauge" viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true">
       <path className="gauge-track" d={ARC_PATH} pathLength={100} />
       <path className="gauge-fill" d={ARC_PATH} pathLength={100} style={style(currentFraction)} />
-      <g className="gauge-marker gauge-marker--setpoint" style={style(setpointFraction)}>
-        <circle cx={CENTER} cy={CENTER - RADIUS} />
-      </g>
+      {/* r is also set as an attribute because not every browser applies the CSS r property;
+          main-screen.css overrides it where it does */}
+      {/* The setpoint ring is drawn last, on top, so it stays visible around the current knob */}
       <g className="gauge-marker gauge-marker--current" style={style(currentFraction)}>
-        <circle cx={CENTER} cy={CENTER - RADIUS} />
+        <circle cx={CENTER} cy={CENTER - RADIUS} r={9.5} />
+      </g>
+      <g className="gauge-marker gauge-marker--setpoint" style={style(setpointFraction)}>
+        <circle cx={CENTER} cy={CENTER - RADIUS} r={10} />
       </g>
     </svg>
   );

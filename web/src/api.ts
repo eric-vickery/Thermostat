@@ -58,3 +58,35 @@ export async function updateThermostat(
     body: JSON.stringify(patch),
   });
 }
+
+export interface Settings {
+  temperature_hysteresis: number;
+  inactivity_timeout_s: number;
+  active_brightness: number;
+  idle_brightness: number;
+}
+
+let mockSettings: Settings = {
+  temperature_hysteresis: 2,
+  inactivity_timeout_s: 30,
+  active_brightness: 100,
+  idle_brightness: 3,
+};
+
+export async function fetchSettings(): Promise<Settings> {
+  if (useMock) {
+    return mockSettings;
+  }
+  return request<Settings>('/api/settings');
+}
+
+export async function updateSettings(patch: Partial<Settings>): Promise<Settings> {
+  if (useMock) {
+    mockSettings = { ...mockSettings, ...patch };
+    return mockSettings;
+  }
+  return request<Settings>('/api/settings', {
+    method: 'PUT',
+    body: JSON.stringify(patch),
+  });
+}

@@ -67,27 +67,29 @@
   transition: transform var(--transition);
 }
 
-/* Filled knob: where the thermostat is set to */
+/* Open circle: where the thermostat is set to (as on the hardware screen). It is drawn on top
+   of the current temperature knob and is larger, so it rings the knob when they coincide. */
 .gauge-marker--setpoint circle {
-  r: 8;
-  fill: var(--color-arc-fill);
-  stroke: var(--color-text);
-  stroke-width: 1.5;
-}
-
-/* Hollow ring: the temperature right now */
-.gauge-marker--current circle {
-  r: 7;
-  fill: var(--color-dial);
+  r: 10;
+  fill: none;
   stroke: var(--color-text);
   stroke-width: 2;
+}
+
+/* Filled knob: the temperature right now, at the end of the lit part of the arc.
+   Its radius reaches just under the setpoint ring's stroke (ring radius 10 minus half its
+   2 wide stroke is 9), so the two touch with no gap when the temperatures match. */
+.gauge-marker--current circle {
+  r: 9.5;
+  fill: var(--color-arc-fill);
+  stroke: none;
 }
 
 /* ---- Readings --------------------------------------------------------- */
 
 .dial-content {
   position: absolute;
-  inset: 10cqw 12cqw 14cqw;
+  inset: 16cqw 12cqw 14cqw;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -200,6 +202,35 @@
 .mode-button[aria-pressed='true'] {
   background: var(--color-control-active);
   color: var(--color-control-active-text);
+}
+
+.screen-nav {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-control);
+  background: var(--color-control);
+  font-weight: 600;
+  transition: background var(--transition);
+}
+
+.nav-link:hover {
+  background: var(--color-control-hover);
+}
+
+.nav-link svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 
 .status {

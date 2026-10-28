@@ -16,7 +16,7 @@ A WiFi-connected heating thermostat for the ESP32-S3, built around a round touch
 - **Heater control**: wireless over ESP-NOW with automatic pairing, and/or an optional local relay.
 - **Sensors**: temperature, humidity, and barometric pressure corrected to sea level for your altitude.
 - **WiFi setup by captive portal**: no credentials in the source. NTP sets the clock for the schedule.
-- **Idle screen**: dims after a configurable timeout; the first touch or ring turn just wakes it.
+- **Idle screen**: dims after a configurable timeout (or never, if set to 0); the first touch or ring turn just wakes it.
 - **Persistent**: mode, setpoint, schedule and settings are stored in NVS and survive power loss.
 
 ## Hardware
@@ -47,7 +47,7 @@ Pin assignments, as used in the firmware:
 - **Turn the ring** to raise or lower the setpoint. The new value takes effect about 2.5 seconds after you stop turning.
 - **Tap the mode icon** to cycle Off, Manual and Schedule. The change is applied after the same short delay, so you can pass through modes without toggling the heater.
 - The **WiFi symbol** shows when the device is connected. A separate screen shows its IP address.
-- After the inactivity timeout the screen dims to the idle screen. Touch or turn the ring to wake it.
+- After the inactivity timeout the screen dims to the idle screen. Touch or turn the ring to wake it. Set the timeout to 0 to keep the screen on.
 
 ### Modes
 
@@ -80,7 +80,7 @@ Open `http://<device-ip>` (the IP is on the device's network screen), or `http:/
 | Setting | Range | Purpose |
 | --- | --- | --- |
 | Temperature hysteresis | 0-4 °F | Slack before the heater switches on or off |
-| Inactivity timeout | 1-3600 s | Time before the idle screen takes over |
+| Inactivity timeout | 0-3600 s | Time before the idle screen takes over; 0 never times out |
 | Active brightness | 1-100 % | Backlight while the screen is in use |
 | Idle brightness | 0-100 % | Backlight while the idle screen shows |
 | Altitude | -1500 to 20000 ft | Corrects the pressure reading to sea level, to match weather reports |

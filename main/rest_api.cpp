@@ -24,7 +24,7 @@ static const char *TAG = "RestApi";
 
 #define HYSTERESIS_MIN  0
 #define HYSTERESIS_MAX  4
-#define TIMEOUT_MIN_S   1
+#define TIMEOUT_MIN_S   0
 #define TIMEOUT_MAX_S   3600
 #define ACTIVE_BRIGHTNESS_MIN   1
 #define IDLE_BRIGHTNESS_MIN     0

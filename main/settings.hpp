@@ -26,7 +26,7 @@ public:
     int32_t temperature_hysteresis();
     void set_temperature_hysteresis(int32_t value);
 
-    // Time without activity before the idle screen takes over
+    // Time without activity before the idle screen takes over, 0 for never
     int32_t inactivity_timeout_ms();
     void set_inactivity_timeout_ms(int32_t value);
 

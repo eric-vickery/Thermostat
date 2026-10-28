@@ -31,9 +31,9 @@ const SETTINGS: SettingDef[] = [
     label: 'Inactivity timeout',
     help:
       'How long the thermostat screen can go untouched before it switches to the idle ' +
-      'screen and dims.',
+      'screen and dims. 0 means it never goes idle.',
     control: 'number',
-    min: 1,
+    min: 0,
     max: 3600,
     unit: 's',
   },

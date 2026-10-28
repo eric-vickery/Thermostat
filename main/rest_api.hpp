@@ -18,7 +18,7 @@ class Thermostat;
 //                          humidity, pressure, heater_on
 //   PUT  /api/thermostat   mode, setpoint (SETPOINT_MIN..SETPOINT_MAX)
 //
-//   GET  /api/settings     temperature_hysteresis (0..4), inactivity_timeout_s (1..3600),
+//   GET  /api/settings     temperature_hysteresis (0..4), inactivity_timeout_s (0..3600, 0 = never),
 //                          active_brightness (1..100), idle_brightness (0..100),
 //                          altitude_ft (-1500..20000, pressure is corrected to sea level with it)
 //   PUT  /api/settings     any of the above

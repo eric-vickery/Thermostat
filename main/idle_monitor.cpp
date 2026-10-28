@@ -49,7 +49,8 @@ void IdleMonitor::run()
 
         uint32_t inactive_time = lv_display_get_inactive_time(NULL);
 
-        if (inactive_time >= (uint32_t)timeout_ms_) {
+        // A timeout of 0 means the idle screen never takes over
+        if (timeout_ms_ > 0 && inactive_time >= (uint32_t)timeout_ms_) {
             activate();
         }
         else {

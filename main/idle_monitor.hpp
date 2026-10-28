@@ -8,10 +8,10 @@ class IdleMonitor {
 public:
     explicit IdleMonitor(Display &display) : display_(display) {}
 
-    // Brightness values are backlight percents
+    // Brightness values are backlight percents. A timeout of 0 disables the idle screen.
     void start(int32_t timeout_ms, int32_t active_brightness, int32_t idle_brightness);
 
-    // Takes effect immediately
+    // Takes effect immediately. 0 disables the idle screen.
     void set_timeout_ms(int32_t timeout_ms) { timeout_ms_ = timeout_ms; }
     // Backlight level while the screen is in use. Applied now unless the idle screen is showing.
     void set_active_brightness(int32_t percent);

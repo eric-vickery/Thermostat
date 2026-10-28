@@ -205,3 +205,7 @@ The relay follows the heater state and starts off at boot.
   HVAC call for heat.
 - If you switch mains voltage, check the relay's contact rating, use a proper enclosure, and keep
   mains wiring away from the low-voltage side. You are responsible for a safe installation.
+
+## License
+
+Released under the [MIT License](LICENSE).

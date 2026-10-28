@@ -66,6 +66,7 @@ export interface Settings {
   inactivity_timeout_s: number;
   active_brightness: number;
   idle_brightness: number;
+  altitude_ft: number;
 }
 
 let mockSettings: Settings = {
@@ -73,6 +74,7 @@ let mockSettings: Settings = {
   inactivity_timeout_s: 30,
   active_brightness: 100,
   idle_brightness: 3,
+  altitude_ft: 0,
 };
 
 export async function fetchSettings(): Promise<Settings> {

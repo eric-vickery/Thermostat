@@ -3,6 +3,7 @@
 
 #include "connectivity.hpp"
 #include "display.hpp"
+#include "heater_relay.hpp"
 #include "idle_monitor.hpp"
 #include "input_controller.hpp"
 #include "power.hpp"
@@ -22,6 +23,7 @@ static Display display;
 static IdleMonitor idle_monitor(display);
 static UserInput user_input;
 static Connectivity connectivity;
+static HeaterRelay heater_relay;
 
 static void mode_button_event_handler(lv_event_t *event)
 {
@@ -35,16 +37,19 @@ extern "C" void app_main(void)
 {
     Thermostat &thermostat = Thermostat::instance();
     static Scheduler scheduler(thermostat);
-    static RestApi rest_api(thermostat, scheduler, idle_monitor);
     static SensorMonitor sensors(thermostat);
+    static RestApi rest_api(thermostat, scheduler, idle_monitor, sensors);
     static InputController input_controller(user_input, idle_monitor, thermostat);
 
     Settings &settings = Settings::instance();
     settings.init();
     thermostat.load();
     scheduler.init();
+    sensors.set_altitude_ft(settings.altitude_ft());
+    heater_relay.init();
 
     thermostat.set_heater_changed_callback([](bool on) {
+        heater_relay.set(on);
         if (lvgl_port_lock(0)) {
             Display::set_heat_ring(on);
             lvgl_port_unlock();

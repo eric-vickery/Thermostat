@@ -10,6 +10,7 @@
 
 #include "idle_monitor.hpp"
 #include "scheduler.hpp"
+#include "sensor_monitor.hpp"
 #include "settings.hpp"
 #include "thermostat.hpp"
 
@@ -28,6 +29,8 @@ static const char *TAG = "RestApi";
 #define ACTIVE_BRIGHTNESS_MIN   1
 #define IDLE_BRIGHTNESS_MIN     0
 #define BRIGHTNESS_MAX          100
+#define ALTITUDE_MIN_FT         -1500
+#define ALTITUDE_MAX_FT         20000
 
 #define STATUS_OK           "200 OK"
 #define STATUS_CREATED      "201 Created"
@@ -201,6 +204,7 @@ static cJSON *settings_json()
     cJSON_AddNumberToObject(obj, "inactivity_timeout_s", settings.inactivity_timeout_ms() / 1000);
     cJSON_AddNumberToObject(obj, "active_brightness", settings.active_brightness());
     cJSON_AddNumberToObject(obj, "idle_brightness", settings.idle_brightness());
+    cJSON_AddNumberToObject(obj, "altitude_ft", settings.altitude_ft());
     return obj;
 }
 
@@ -414,8 +418,8 @@ esp_err_t RestApi::settings_put(httpd_req_t *req)
         return ESP_OK;
     }
 
-    bool has_hysteresis, has_timeout, has_active, has_idle;
-    int hysteresis = 0, timeout = 0, active = 0, idle = 0;
+    bool has_hysteresis, has_timeout, has_active, has_idle, has_altitude;
+    int hysteresis = 0, timeout = 0, active = 0, idle = 0, altitude = 0;
     bool valid = get_ranged_int(req, body, "temperature_hysteresis", HYSTERESIS_MIN, HYSTERESIS_MAX,
                                 has_hysteresis, hysteresis) &&
                  get_ranged_int(req, body, "inactivity_timeout_s", TIMEOUT_MIN_S, TIMEOUT_MAX_S,
@@ -423,7 +427,9 @@ esp_err_t RestApi::settings_put(httpd_req_t *req)
                  get_ranged_int(req, body, "active_brightness", ACTIVE_BRIGHTNESS_MIN, BRIGHTNESS_MAX,
                                 has_active, active) &&
                  get_ranged_int(req, body, "idle_brightness", IDLE_BRIGHTNESS_MIN, BRIGHTNESS_MAX,
-                                has_idle, idle);
+                                has_idle, idle) &&
+                 get_ranged_int(req, body, "altitude_ft", ALTITUDE_MIN_FT, ALTITUDE_MAX_FT,
+                                has_altitude, altitude);
     cJSON_Delete(body);
     if (!valid) {
         return ESP_OK;
@@ -444,6 +450,10 @@ esp_err_t RestApi::settings_put(httpd_req_t *req)
     if (has_idle) {
         api.idle_monitor_.set_idle_brightness(idle);
         Settings::instance().set_idle_brightness(idle);
+    }
+    if (has_altitude) {
+        api.sensors_.set_altitude_ft(altitude);
+        Settings::instance().set_altitude_ft(altitude);
     }
     return send_json(req, settings_json());
 }

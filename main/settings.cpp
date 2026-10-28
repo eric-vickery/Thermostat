@@ -89,6 +89,16 @@ void Settings::set_idle_brightness(int32_t value)
     store_int32("idle_bright", value);
 }
 
+int32_t Settings::altitude_ft()
+{
+    return read_int32_with_default("altitude_ft", 0);
+}
+
+void Settings::set_altitude_ft(int32_t value)
+{
+    store_int32("altitude_ft", value);
+}
+
 void Settings::store_int32(const char *key, int32_t value)
 {
     esp_err_t err = nvs_set_i32(handle_, key, value);

@@ -55,6 +55,17 @@ const SETTINGS: SettingDef[] = [
     max: 100,
     unit: '%',
   },
+  {
+    key: 'altitude_ft',
+    label: 'Altitude',
+    help:
+      'Your elevation above sea level. The pressure reading is corrected to sea level using ' +
+      'it, so it matches weather reports instead of showing the lower pressure of high ground.',
+    control: 'number',
+    min: -1500,
+    max: 20000,
+    unit: 'ft',
+  },
 ];
 
 interface NumberFieldProps {

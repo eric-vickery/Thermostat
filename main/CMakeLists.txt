@@ -1,4 +1,4 @@
-idf_component_register(SRCS "connectivity.cpp" "display.cpp" "idle_monitor.cpp"
+idf_component_register(SRCS "connectivity.cpp" "display.cpp" "heater_relay.cpp" "idle_monitor.cpp"
                             "input_controller.cpp" "main.cpp" "power.cpp" "rest_api.cpp"
                             "scheduler.cpp" "sensor_monitor.cpp" "settings.cpp" "status_leds.cpp"
                             "thermostat.cpp" "user_input.cpp"

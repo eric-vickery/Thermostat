@@ -51,3 +51,41 @@ Please use the following feedback channels:
 * For a feature request or bug report, create a [GitHub issue](https://github.com/espressif/esp-idf/issues)
 
 We will get back to you as soon as possible.
+
+## Optional local heater relay
+
+By default the thermostat tells a remote unit over ESP-NOW when to turn the heater on and off.
+It can also switch a relay directly from a GPIO on the board. This is off by default and untested on
+hardware beyond the wiring notes below, so treat it as a starting point.
+
+To enable it, uncomment `THERMOSTAT_RELAY` in `main/thermostat_config.h`:
+
+```c
+#define THERMOSTAT_RELAY 1
+#define THERMOSTAT_RELAY_GPIO 44          // RXD0 on the Elecrow 1.28" rotary display's UART port
+#define THERMOSTAT_RELAY_ACTIVE_LOW 1     // relay turns on when the pin is pulled low
+```
+
+The relay follows the heater state and starts off at boot.
+
+**Wiring on the Elecrow 1.28" rotary display**
+
+- Use the UART port: RXD0 (GPIO44) for the signal, `+5V` for the relay board's supply, and `GND`.
+- The port has a MOSFET level shifter on each pin with 10k pull-ups to 3.3V on the ESP32 side and to 5V
+  on the port side. The pin therefore behaves like an open-drain output that idles at 5V.
+- That suits a 5V **active-low** opto-isolated relay board, which is the common kind: the line idles
+  at 5V (relay off) and the ESP32 pulls it low to switch the relay on, sinking only a few mA.
+- An **active-high** board will not work directly, because the 10k pull-up can supply only about
+  0.5 mA, which is too little to drive an opto-isolator. Add a transistor stage.
+- RXD0 is used instead of TXD0 because TXD0 carries boot messages on every reset, which would click
+  the relay. RXD0 is an input during boot, so the relay stays off until the application starts.
+- This takes over the UART0 RX pin, so the serial console no longer accepts typed input. Log output
+  is unaffected.
+
+**Safety**
+
+- Opto-isolation only separates the logic side if the relay board has its own supply. Sharing GND
+  with the thermostat removes that isolation, which is fine for switching a dry contact such as a 24V
+  HVAC call for heat.
+- If you switch mains voltage, check the relay's contact rating, use a proper enclosure, and keep
+  mains wiring away from the low-voltage side. You are responsible for a safe installation.

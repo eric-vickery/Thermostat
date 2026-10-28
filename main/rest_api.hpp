@@ -5,6 +5,7 @@
 
 class IdleMonitor;
 class Scheduler;
+class SensorMonitor;
 class Thermostat;
 
 // HTTP server for the web app (files from the "www" SPIFFS partition, any unknown path gets
@@ -18,7 +19,8 @@ class Thermostat;
 //   PUT  /api/thermostat   mode, setpoint (SETPOINT_MIN..SETPOINT_MAX)
 //
 //   GET  /api/settings     temperature_hysteresis (0..4), inactivity_timeout_s (1..3600),
-//                          active_brightness (1..100), idle_brightness (0..100)
+//                          active_brightness (1..100), idle_brightness (0..100),
+//                          altitude_ft (-1500..20000, pressure is corrected to sea level with it)
 //   PUT  /api/settings     any of the above
 //
 //   GET    /api/schedule                      all seven days
@@ -32,8 +34,10 @@ class Thermostat;
 // Errors are {"error":"message"} with 400, 404, 405, 409 (day full) or 500.
 class RestApi {
 public:
-    RestApi(Thermostat &thermostat, Scheduler &scheduler, IdleMonitor &idle_monitor)
-        : thermostat_(thermostat), scheduler_(scheduler), idle_monitor_(idle_monitor) {}
+    RestApi(Thermostat &thermostat, Scheduler &scheduler, IdleMonitor &idle_monitor,
+            SensorMonitor &sensors)
+        : thermostat_(thermostat), scheduler_(scheduler), idle_monitor_(idle_monitor),
+          sensors_(sensors) {}
 
     // Starts the HTTP server. Call once the network is up.
     esp_err_t start();
@@ -57,5 +61,6 @@ private:
     Thermostat &thermostat_;
     Scheduler &scheduler_;
     IdleMonitor &idle_monitor_;
+    SensorMonitor &sensors_;
     httpd_handle_t server_ = nullptr;
 };

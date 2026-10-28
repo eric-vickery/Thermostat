@@ -38,6 +38,10 @@ public:
     int32_t idle_brightness();
     void set_idle_brightness(int32_t value);
 
+    // Elevation in feet above sea level, used to correct the pressure reading to sea level
+    int32_t altitude_ft();
+    void set_altitude_ft(int32_t value);
+
 private:
     Settings() = default;
 

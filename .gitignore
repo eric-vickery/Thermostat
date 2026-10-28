@@ -82,3 +82,7 @@ components/eez-framework
 # EEZ Studio patch scripts and their project backups
 tmp/
 *.eez-project.bak.*
+
+# Web app
+web/node_modules/
+web/dist/

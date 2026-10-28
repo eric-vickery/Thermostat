@@ -1,0 +1,245 @@
+.main-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1.5rem 1rem;
+}
+
+/* ---- Round display ---------------------------------------------------- */
+
+.dial {
+  --dial-size: min(92vw, 70vh, var(--dial-max-size));
+
+  position: relative;
+  width: var(--dial-size);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--color-dial);
+  border: calc(var(--dial-size) * 0.014) solid var(--color-dial-edge);
+  /* Sizes inside are in cqw so the whole dial scales with its width */
+  container-type: size;
+  box-shadow: 0 0 0 0 transparent;
+  transition: box-shadow var(--transition);
+}
+
+.dial--heating {
+  box-shadow: 0 0 0 calc(var(--dial-size) * 0.012) var(--color-heating),
+    0 0 calc(var(--dial-size) * 0.06) var(--color-heating);
+}
+
+.dial--off .reading--setpoint,
+.dial--off .gauge-marker--setpoint {
+  opacity: 0.4;
+}
+
+/* ---- Arc gauge -------------------------------------------------------- */
+
+.gauge {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gauge-track,
+.gauge-fill {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.gauge-track {
+  stroke: var(--color-arc-track);
+}
+
+.gauge-fill {
+  stroke: var(--color-arc-fill);
+  stroke-dasharray: calc(var(--fraction) * 100) 100;
+  transition: stroke-dasharray var(--transition);
+}
+
+.gauge-marker {
+  transform: rotate(var(--angle));
+  transform-origin: 100px 100px;
+  transition: transform var(--transition);
+}
+
+/* Open circle: where the thermostat is set to (as on the hardware screen). It is drawn on top
+   of the current temperature knob and is larger, so it rings the knob when they coincide. */
+.gauge-marker--setpoint circle {
+  r: 10;
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 2;
+}
+
+/* Filled knob: the temperature right now, at the end of the lit part of the arc.
+   Its radius reaches just under the setpoint ring's stroke (ring radius 10 minus half its
+   2 wide stroke is 9), so the two touch with no gap when the temperatures match. */
+.gauge-marker--current circle {
+  r: 9.5;
+  fill: var(--color-arc-fill);
+  stroke: none;
+}
+
+/* ---- Readings --------------------------------------------------------- */
+
+.dial-content {
+  position: absolute;
+  inset: 16cqw 12cqw 14cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+}
+
+.reading,
+.sensor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.reading-value {
+  font-weight: 700;
+  line-height: 1;
+}
+
+.reading-label {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.reading--current .reading-value {
+  font-size: 22cqw;
+}
+
+.reading--current .reading-label {
+  font-size: 6.5cqw;
+}
+
+.reading--setpoint {
+  color: var(--color-setpoint);
+  transition: opacity var(--transition);
+}
+
+.reading--setpoint .reading-value {
+  font-size: 12cqw;
+}
+
+.reading--setpoint .reading-label {
+  font-size: 5.5cqw;
+}
+
+.sensors {
+  display: flex;
+  gap: 8cqw;
+}
+
+.sensor-label {
+  font-size: 4.2cqw;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.sensor-value {
+  font-size: 8cqw;
+  font-weight: 700;
+}
+
+/* ---- Controls under the dial ------------------------------------------ */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.step-button,
+.mode-button {
+  border: 0;
+  cursor: pointer;
+  background: var(--color-control);
+  transition: background var(--transition), color var(--transition);
+}
+
+.step-button:hover:not(:disabled),
+.mode-button:hover:not(:disabled) {
+  background: var(--color-control-hover);
+}
+
+.step-button:disabled,
+.mode-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.step-button {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.mode-switch {
+  display: flex;
+  border-radius: var(--radius-control);
+  background: var(--color-control);
+  overflow: hidden;
+}
+
+.mode-button {
+  padding: 0.7rem 1.1rem;
+  font-weight: 600;
+  background: transparent;
+}
+
+.mode-button[aria-pressed='true'] {
+  background: var(--color-control-active);
+  color: var(--color-control-active-text);
+}
+
+.screen-nav {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-control);
+  background: var(--color-control);
+  font-weight: 600;
+  transition: background var(--transition);
+}
+
+.nav-link:hover {
+  background: var(--color-control-hover);
+}
+
+.nav-link svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.status {
+  min-height: 1.25em;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.status--error {
+  color: var(--color-error);
+}

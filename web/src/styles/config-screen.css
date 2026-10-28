@@ -1,0 +1,180 @@
+.config-screen {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ---- Header ----------------------------------------------------------- */
+
+.screen-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.screen-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.back-link {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--color-control);
+  color: var(--color-text);
+  transition: background var(--transition);
+}
+
+.back-link:hover {
+  background: var(--color-control-hover);
+}
+
+.back-link svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---- Settings list ---------------------------------------------------- */
+
+.setting-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.setting {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.setting-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.setting-heading label {
+  font-weight: 600;
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.setting-value {
+  min-width: 3.5ch;
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.setting-slider {
+  flex: 1;
+  accent-color: var(--color-control-active);
+}
+
+.setting-number {
+  width: 6.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-control-hover);
+  border-radius: var(--radius-input);
+  background: var(--color-control);
+  color: var(--color-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.setting-number:focus-visible {
+  outline: 2px solid var(--color-control-active);
+  outline-offset: 1px;
+}
+
+.setting-number--empty {
+  display: inline-block;
+}
+
+/* ---- Information tooltip ---------------------------------------------- */
+
+.info-tip {
+  position: relative;
+  display: inline-flex;
+}
+
+.info-tip-button {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: help;
+  transition: color var(--transition);
+}
+
+.info-tip-button:hover,
+.info-tip-button:focus-visible {
+  color: var(--color-control-active);
+}
+
+.info-tip-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.info-tip-button circle:last-child {
+  fill: currentColor;
+}
+
+.info-tip-text {
+  position: absolute;
+  z-index: 1;
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  translate: -3rem 0;
+  width: min(18rem, 80vw);
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-input);
+  background: var(--color-tooltip);
+  color: var(--color-text);
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.5);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  font-weight: 500;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition), visibility var(--transition);
+  pointer-events: none;
+}
+
+.info-tip:hover .info-tip-text,
+.info-tip-button:focus-visible + .info-tip-text,
+.info-tip--open .info-tip-text {
+  opacity: 1;
+  visibility: visible;
+}

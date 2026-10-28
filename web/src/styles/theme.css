@@ -14,6 +14,7 @@
   --color-control: rgba(255, 255, 255, 0.08);
   --color-control-hover: rgba(255, 255, 255, 0.16);
   --color-control-active: #3fb0ee;
+  --color-control-active-hover: #6cc0f3;
   --color-control-active-text: #05071a;
   --color-error: #ff6b6b;
   --color-card: #1a1c24;

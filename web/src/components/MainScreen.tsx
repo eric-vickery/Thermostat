@@ -89,8 +89,14 @@ export default function MainScreen() {
         {error ? `Can't reach the thermostat (${error})` : state?.heater_on ? 'Heating' : ''}
       </p>
 
-      {/* Links to the other screens; the schedule screen will be added here */}
       <nav className="screen-nav" aria-label="Screens">
+        <a className="nav-link" href="#/schedule">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M3 10h18M8 3v4M16 3v4" />
+          </svg>
+          Schedule
+        </a>
         <a className="nav-link" href="#/config">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="3" />

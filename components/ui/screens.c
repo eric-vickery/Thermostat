@@ -12,8 +12,8 @@
 
 objects_t objects;
 
-static const char *screen_names[] = { "Main", "Idle" };
-static const char *object_names[] = { "main", "idle", "main_container", "current_temp_arc", "setpoint_arc", "current_temp_label", "current_temp", "setpoint_label", "setpoint", "mode_button", "mode_icon_off", "mode_icon_manual", "mode_icon_schedule", "humidity_label", "humidity", "pressure_label", "pressure", "current_temp_arc_1", "current_temp_1" };
+static const char *screen_names[] = { "Main", "Idle", "Network" };
+static const char *object_names[] = { "main", "idle", "network", "main_container", "current_temp_arc", "setpoint_arc", "current_temp_label", "current_temp", "setpoint_label", "setpoint", "mode_button", "mode_icon_off", "mode_icon_manual", "mode_icon_schedule", "humidity_label", "humidity", "pressure_label", "pressure", "wi_fi_button", "wi_fi_symbol", "current_temp_arc_1", "current_temp_1", "network_title", "network_ip", "back_button", "back_label" };
 
 //
 // Event handlers
@@ -258,6 +258,35 @@ void create_screen_main() {
             lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_label_set_text(obj, "");
         }
+        {
+            // WiFi Button
+            lv_obj_t *obj = lv_button_create(parent_obj);
+            objects.wi_fi_button = obj;
+            lv_obj_set_pos(obj, 168, 118);
+            lv_obj_set_size(obj, 34, 34);
+            lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            {
+                lv_obj_t *parent_obj = obj;
+                {
+                    // WiFi Symbol
+                    lv_obj_t *obj = lv_label_create(parent_obj);
+                    objects.wi_fi_symbol = obj;
+                    lv_obj_set_pos(obj, 0, 0);
+                    lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                    lv_obj_set_style_text_font(obj, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text_static(obj, "");
+                }
+            }
+        }
     }
     
     tick_screen_main();
@@ -359,6 +388,19 @@ void tick_screen_main() {
             tick_value_change_obj = NULL;
         }
     }
+    {
+        bool new_val = evalBooleanProperty(flowState, 17, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.wi_fi_button, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.wi_fi_button;
+            if (new_val) {
+                lv_obj_add_flag(objects.wi_fi_button, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_remove_flag(objects.wi_fi_button, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
 }
 
 void create_screen_idle() {
@@ -429,13 +471,92 @@ void tick_screen_idle() {
     }
 }
 
+void create_screen_network() {
+    void *flowState = getFlowState(0, 2);
+    (void)flowState;
+    lv_obj_t *obj = lv_obj_create(0);
+    objects.network = obj;
+    lv_obj_set_pos(obj, 0, 0);
+    lv_obj_set_size(obj, 240, 240);
+    lv_obj_set_style_bg_color(obj, lv_color_hex(0x0a1128), LV_PART_MAIN | LV_STATE_DEFAULT);
+    {
+        lv_obj_t *parent_obj = obj;
+        {
+            // Network Title
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.network_title = obj;
+            lv_obj_set_pos(obj, 20, 70);
+            lv_obj_set_size(obj, 200, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xffbf00), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text_static(obj, "IP Address");
+        }
+        {
+            // Network IP
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.network_ip = obj;
+            lv_obj_set_pos(obj, 10, 105);
+            lv_obj_set_size(obj, 220, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text(obj, "");
+        }
+        {
+            // Back Button
+            lv_obj_t *obj = lv_button_create(parent_obj);
+            objects.back_button = obj;
+            lv_obj_set_pos(obj, 70, 165);
+            lv_obj_set_size(obj, 100, 40);
+            lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(obj, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_color(obj, lv_color_hex(0xffbf00), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
+            {
+                lv_obj_t *parent_obj = obj;
+                {
+                    // Back Label
+                    lv_obj_t *obj = lv_label_create(parent_obj);
+                    objects.back_label = obj;
+                    lv_obj_set_pos(obj, 0, 0);
+                    lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                    lv_obj_set_style_text_font(obj, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text_static(obj, "Back");
+                }
+            }
+        }
+    }
+    
+    tick_screen_network();
+}
+
+void tick_screen_network() {
+    void *flowState = getFlowState(0, 2);
+    (void)flowState;
+    {
+        const char *new_val = evalTextProperty(flowState, 2, 3, "Failed to evaluate Text in Label widget");
+        const char *cur_val = lv_label_get_text(objects.network_ip);
+        if (strcmp(new_val, cur_val) != 0) {
+            tick_value_change_obj = objects.network_ip;
+            lv_label_set_text(objects.network_ip, new_val);
+            tick_value_change_obj = NULL;
+        }
+    }
+}
+
 typedef void (*tick_screen_func_t)();
 tick_screen_func_t tick_screen_funcs[] = {
     tick_screen_main,
     tick_screen_idle,
+    tick_screen_network,
 };
 void tick_screen(int screen_index) {
-    if (screen_index >= 0 && screen_index < 2) {
+    if (screen_index >= 0 && screen_index < 3) {
         tick_screen_funcs[screen_index]();
     }
 }
@@ -533,4 +654,5 @@ void create_screens() {
     // Create screens
     create_screen_main();
     create_screen_idle();
+    create_screen_network();
 }

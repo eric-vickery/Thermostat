@@ -167,6 +167,16 @@ static void eez_ui_tick_cb(lv_timer_t * timer) {
     }
 }
 
+static void wifi_button_event_handler(lv_event_t *event)
+{
+    eez_flow_set_screen(SCREEN_ID_NETWORK, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0);
+}
+
+static void back_button_event_handler(lv_event_t *event)
+{
+    eez_flow_set_screen(SCREEN_ID_MAIN, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0);
+}
+
 void Display::init_lvgl(lv_event_cb_t mode_button_cb)
 {
     // Initialize LVGL & Port Layer
@@ -208,6 +218,8 @@ void Display::init_lvgl(lv_event_cb_t mode_button_cb)
         lv_obj_set_style_outline_color(objects.main_container, lv_color_hex(0xFF4D4D), LV_PART_MAIN);
 
         lv_obj_add_event_cb(objects.mode_button, mode_button_cb, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(objects.wi_fi_button, wifi_button_event_handler, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(objects.back_button, back_button_event_handler, LV_EVENT_CLICKED, NULL);
 
         // Register EEZ Studio's tick to execute natively every 10ms
         // inside the official esp_lvgl_port task thread

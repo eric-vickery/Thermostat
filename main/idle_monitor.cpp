@@ -39,6 +39,14 @@ void IdleMonitor::task(void *arg)
 void IdleMonitor::run()
 {
     while (true) {
+        // The network screen stays up until the user leaves it, so keep resetting the inactivity timer
+        if (lvgl_port_lock(0)) {
+            if (lv_screen_active() == objects.network) {
+                lv_display_trigger_activity(NULL);
+            }
+            lvgl_port_unlock();
+        }
+
         uint32_t inactive_time = lv_display_get_inactive_time(NULL);
 
         if (inactive_time >= (uint32_t)timeout_ms_) {

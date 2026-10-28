@@ -28,6 +28,10 @@ extern const char *get_var_pressure_string();
 extern void set_var_pressure_string(const char *value);
 extern int32_t get_var_mode();
 extern void set_var_mode(int32_t value);
+extern int32_t get_var_wifi_connected();
+extern void set_var_wifi_connected(int32_t value);
+extern const char *get_var_ip_address();
+extern void set_var_ip_address(const char *value);
 
 #ifdef __cplusplus
 }

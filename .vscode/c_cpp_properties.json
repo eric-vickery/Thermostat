@@ -3,7 +3,7 @@
     {
       "name": "ESP-IDF",
       "compilerPath": "",
-      "compileCommands": "/Users/eric/source/Thermostat/build/default/compile_commands.json",
+      "compileCommands": "${workspaceFolder}/build/default/compile_commands.json",
       "intelliSenseMode": "gcc-x86",
       "includePath": [
         "${workspaceFolder}/**"

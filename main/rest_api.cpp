@@ -8,6 +8,7 @@
 #include "esp_spiffs.h"
 #include "cJSON.h"
 
+#include "connectivity.hpp"
 #include "idle_monitor.hpp"
 #include "scheduler.hpp"
 #include "sensor_monitor.hpp"
@@ -193,6 +194,7 @@ static cJSON *thermostat_json(Thermostat &thermostat)
     cJSON_AddNumberToObject(obj, "humidity", thermostat.humidity());
     cJSON_AddStringToObject(obj, "pressure", thermostat.pressure_string());
     cJSON_AddBoolToObject(obj, "heater_on", thermostat.is_heater_on());
+    cJSON_AddBoolToObject(obj, "remote_missing", remote_missing());
     return obj;
 }
 

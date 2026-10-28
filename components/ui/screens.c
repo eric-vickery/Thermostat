@@ -13,7 +13,7 @@
 objects_t objects;
 
 static const char *screen_names[] = { "Main", "Idle", "Network" };
-static const char *object_names[] = { "main", "idle", "network", "main_container", "current_temp_arc", "setpoint_arc", "current_temp_label", "current_temp", "setpoint_label", "setpoint", "mode_button", "mode_icon_off", "mode_icon_manual", "mode_icon_schedule", "humidity_label", "humidity", "pressure_label", "pressure", "wi_fi_button", "wi_fi_symbol", "current_temp_arc_1", "current_temp_1", "network_title", "network_ip", "back_button", "back_label" };
+static const char *object_names[] = { "main", "idle", "network", "main_container", "current_temp_arc", "setpoint_arc", "current_temp_label", "current_temp", "setpoint_label", "setpoint", "mode_button", "mode_icon_off", "mode_icon_manual", "mode_icon_schedule", "humidity_label", "humidity", "pressure_label", "pressure", "wi_fi_button", "wi_fi_symbol", "current_temp_arc_1", "current_temp_1", "missing_remote", "network_title", "network_ip", "back_button", "back_label" };
 
 //
 // Event handlers
@@ -442,6 +442,17 @@ void create_screen_idle() {
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_label_set_text(obj, "");
+        }
+        {
+            // Missing Remote
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.missing_remote = obj;
+            lv_obj_set_pos(obj, 37, 177);
+            lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xff0000), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text_static(obj, "Missing Remote");
         }
     }
     

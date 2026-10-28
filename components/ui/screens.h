@@ -40,6 +40,7 @@ typedef struct _objects_t {
     lv_obj_t *wi_fi_symbol;
     lv_obj_t *current_temp_arc_1;
     lv_obj_t *current_temp_1;
+    lv_obj_t *missing_remote;
     lv_obj_t *network_title;
     lv_obj_t *network_ip;
     lv_obj_t *back_button;

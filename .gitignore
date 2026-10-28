@@ -86,3 +86,5 @@ tmp/
 # Web app
 web/node_modules/
 web/dist/
+
+.vscode/settings.json

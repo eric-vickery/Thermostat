@@ -15,7 +15,8 @@ class Thermostat;
 // successful call returns the resulting resource.
 //
 //   GET  /api/thermostat   mode ("off"|"manual"|"schedule"), setpoint, current_temp,
-//                          humidity, pressure, heater_on
+//                          humidity, pressure, heater_on,
+//                          remote_missing (a paired remote has stopped responding)
 //   PUT  /api/thermostat   mode, setpoint (SETPOINT_MIN..SETPOINT_MAX)
 //
 //   GET  /api/settings     temperature_hysteresis (0..4), inactivity_timeout_s (0..3600, 0 = never),

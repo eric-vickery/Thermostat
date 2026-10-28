@@ -60,6 +60,11 @@ const char *get_var_ip_address() {
 void set_var_ip_address(const char *value) {
 }
 
+bool remote_missing()
+{
+    return espnow_master.has_remote() && !espnow_master.remote_online();
+}
+
 static bool heater_is_on(void)
 {
     return Thermostat::instance().is_heater_on();

@@ -10,6 +10,7 @@ export interface ThermostatState {
   humidity: number;
   pressure: string;
   heater_on: boolean;
+  remote_missing: boolean;
 }
 
 export const SETPOINT_MIN = 50;
@@ -26,6 +27,7 @@ let mock: ThermostatState = {
   humidity: 39,
   pressure: '22.71',
   heater_on: false,
+  remote_missing: false,
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

@@ -85,8 +85,17 @@ export default function MainScreen() {
         </button>
       </div>
 
-      <p className={error ? 'status status--error' : 'status'} role="status">
-        {error ? `Can't reach the thermostat (${error})` : state?.heater_on ? 'Heating' : ''}
+      <p
+        className={error || state?.remote_missing ? 'status status--error' : 'status'}
+        role="status"
+      >
+        {error
+          ? `Can't reach the thermostat (${error})`
+          : state?.remote_missing
+            ? 'Missing Remote'
+            : state?.heater_on
+              ? 'Heating'
+              : ''}
       </p>
 
       <nav className="screen-nav" aria-label="Screens">

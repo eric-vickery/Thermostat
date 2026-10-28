@@ -10,6 +10,7 @@
 #include "esp_log.h"
 #include "esp_lvgl_port.h"
 
+#include "connectivity.hpp"
 #include "ui.h"
 #include "screens.h"
 
@@ -160,9 +161,27 @@ void Display::init_touch()
     esp_lcd_touch_new_i2c_cst816s(tp_io_handle, &tp_cfg, &tp_handle_);
 }
 
+// Red WiFi symbol and a "Missing Remote" note on the idle screen while a paired remote is silent
+static void update_remote_status(void)
+{
+    static bool shown = false;
+    bool missing = remote_missing();
+    if (missing == shown) {
+        return;
+    }
+    shown = missing;
+    lv_obj_set_style_text_color(objects.wi_fi_symbol, lv_color_hex(missing ? 0xFF0000 : 0xFFFFFF), LV_PART_MAIN);
+    if (missing) {
+        lv_obj_remove_flag(objects.missing_remote, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_add_flag(objects.missing_remote, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
 static void eez_ui_tick_cb(lv_timer_t * timer) {
     if (lvgl_port_lock(0)) {
         ui_tick(); // Call EEZ Studio's tick function
+        update_remote_status();
         lvgl_port_unlock();
     }
 }
@@ -220,6 +239,8 @@ void Display::init_lvgl(lv_event_cb_t mode_button_cb)
         lv_obj_add_event_cb(objects.mode_button, mode_button_cb, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(objects.wi_fi_button, wifi_button_event_handler, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(objects.back_button, back_button_event_handler, LV_EVENT_CLICKED, NULL);
+
+        lv_obj_add_flag(objects.missing_remote, LV_OBJ_FLAG_HIDDEN);
 
         // Register EEZ Studio's tick to execute natively every 10ms
         // inside the official esp_lvgl_port task thread

@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[Thermostat.eez-project]:/userPages/0",
+    "selectedUserPageObject": "[Thermostat.eez-project]:/userPages/1",
     "selectedGlobalVariableObject": "[Thermostat.eez-project]:/variables/globalVariables/2",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Global"
@@ -196,10 +196,10 @@
                 {
                   "type": "tab",
                   "id": "#9414a39d-562a-4e59-acd3-731faf69cc76",
-                  "name": "Main",
+                  "name": "Idle",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[Thermostat.eez-project]:/userPages/0",
+                    "objectPath": "[Thermostat.eez-project]:/userPages/1",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -1078,7 +1078,10 @@
       "selectionBack": {
         "0": {
           "7": {},
-          "8": {}
+          "8": {},
+          "12": {
+            "$selected": true
+          }
         }
       },
       "transform": {
@@ -1105,6 +1108,23 @@
           }
         }
       },
+      "transform": {
+        "translate": {
+          "x": -120,
+          "y": -120
+        },
+        "scale": 1.1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[Thermostat.eez-project]:/userPages/2[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {},
       "transform": {
         "translate": {
           "x": -120,
